@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>大阪・神戶 5天4夜 隨行規劃助手</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <!-- Google Fonts: Noto Sans TC & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans TC"', 'Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#F5F7FB',
+              100: '#EAEFF8',
+              500: '#3B82F6',
+              600: '#2563EB',
+              700: '#1D4ED8',
+              accent: '#F97316'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* iOS Momentum scrolling & smooth transitions */
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    /* Timeline connecting line */
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: 19px;
+      top: 36px;
+      bottom: -16px;
+      width: 2px;
+      background-color: #E2E8F0;
+    }
+    .timeline-item:last-child::before {
+      display: none;
+    }
+    /* Slide over / bottom sheet animation */
+    .drawer-enter {
+      transform: translateY(100%);
+    }
+    .drawer-active {
+      transform: translateY(0%);
+    }
+    @media (min-width: 1024px) {
+      .drawer-enter {
+        transform: translateY(0%);
+      }
+    }
+    /* Safe-area insets for modern mobile notched devices */
+    .pb-safe {
+      padding-bottom: env(safe-area-inset-bottom, 20px);
+    }
+    .pt-safe {
+      padding-top: env(safe-area-inset-top, 0px);
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col font-sans pb-28 lg:pb-12 selection:bg-blue-100 selection:text-blue-900">
+
+  <!-- Top App Bar -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 pt-safe">
+    <div class="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-sm shadow-blue-200 flex-shrink-0">
+          <i class="ph-bold ph-airplane-tilt text-lg"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-sm sm:text-base font-bold text-slate-900 leading-tight">大阪・關西 隨身行</h1>
+            <span id="saveStatusBadge" class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              已自動儲存
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-500 truncate max-w-[210px] sm:max-w-none">
+            🏨 宿：香榭麗大國 2（大國町站步行4分）
+          </p>
+        </div>
+      </div>
+
+      <!-- Action Utilities Header Buttons -->
+      <div class="flex items-center gap-1.5">
+        <button id="viewToggleShopsBtn" class="lg:hidden px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-orange-50 text-orange-600 border border-orange-200 flex items-center gap-1 active:scale-95 transition">
+          <i class="ph-bold ph-storefront"></i>
+          <span id="toggleShopsBtnText">周邊店家</span>
+        </button>
+        <button id="dataSettingsBtn" class="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition" title="備份與資料管理">
+          <i class="ph-bold ph-gear text-lg"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Day Navigation Scroll Tab Bar -->
+    <div class="bg-white border-t border-slate-100 px-3 py-1.5">
+      <div class="max-w-6xl mx-auto flex items-center overflow-x-auto no-scrollbar gap-2" id="dayTabsList">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-6xl mx-auto w-full px-3 sm:px-6 py-4">
+    <!-- Day Title & Summary Card -->
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm mb-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <span id="currentDayBadge" class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-blue-100 text-blue-700">Day 1</span>
+            <span id="currentDayTheme" class="text-xs font-semibold text-slate-500">南大阪經典巡禮</span>
+          </div>
+          <h2 id="currentDayTitle" class="text-base sm:text-xl font-bold text-slate-900 mt-1">抵達大阪 ＆ 悠閒住吉大社巡禮</h2>
+          <p id="currentDayDesc" class="text-xs sm:text-sm text-slate-600 mt-0.5 leading-relaxed">入住大國町民宿，漫步千年神社朱紅反橋，晚餐享用極上熟成和牛／燒肉。</p>
+        </div>
+
+        <div class="flex items-center gap-2 self-start sm:self-auto flex-shrink-0">
+          <button id="editDayInfoBtn" class="px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 flex items-center gap-1 active:scale-95 transition">
+            <i class="ph-bold ph-pencil-simple"></i>
+            <span>編輯主題</span>
+          </button>
+          <button id="addStopHeaderBtn" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-700 flex items-center gap-1 shadow-sm shadow-blue-200 active:scale-95 transition">
+            <i class="ph-bold ph-plus-circle"></i>
+            <span>新增節點</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      
+      <!-- Left: Interactive Timeline Card List (7 Cols on desktop) -->
+      <section class="lg:col-span-7 space-y-3" id="timelineSection">
+        <div class="flex items-center justify-between px-1">
+          <div class="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+            <i class="ph-bold ph-clock text-blue-600 text-sm"></i>
+            <span>時間軸行程節點</span>
+            <span id="stopsCountBadge" class="px-1.5 py-0.2 bg-slate-200 text-slate-700 rounded-full text-[10px]">0</span>
+          </div>
+          <span class="text-[11px] text-slate-400">點選節點可查看或綁定周邊名店</span>
+        </div>
+
+        <div id="timelineContainer" class="space-y-3 relative">
+          <!-- Timeline stop cards injected by JS -->
+        </div>
+      </section>
+
+      <!-- Right / Mobile Drawer: Nearby Street Shops (5 Cols on desktop, Drawer on Mobile) -->
+      <section id="shopsDrawerContainer" class="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:static lg:bg-transparent lg:backdrop-blur-none lg:z-auto lg:col-span-5 hidden lg:block transition-opacity">
+        <div class="fixed bottom-0 left-0 right-0 max-h-[85vh] h-full lg:max-h-none lg:h-auto lg:static bg-white rounded-t-3xl lg:rounded-2xl border-t lg:border border-slate-200 shadow-xl lg:shadow-sm flex flex-col overflow-hidden pb-safe">
+          
+          <!-- Mobile Drawer Grab handle & Header -->
+          <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-white flex-shrink-0">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center">
+                <i class="ph-bold ph-storefront"></i>
+              </div>
+              <div>
+                <h3 class="text-xs sm:text-sm font-bold text-slate-900">周邊推薦街邊店</h3>
+                <p id="shopTargetStopName" class="text-[11px] text-orange-600 font-medium truncate max-w-[190px]">全部當日景點</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              <button id="addShopQuickBtn" class="px-2.5 py-1 text-xs font-semibold bg-orange-600 text-white rounded-lg shadow-sm shadow-orange-200 hover:bg-orange-700 flex items-center gap-1 active:scale-95 transition">
+                <i class="ph-bold ph-plus"></i>
+                <span>新增私房店</span>
+              </button>
+              <button id="closeDrawerBtn" class="lg:hidden p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">
+                <i class="ph-bold ph-x text-lg"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Category Filter Pills -->
+          <div class="px-3 py-2 border-b border-slate-100 flex gap-1.5 overflow-x-auto no-scrollbar bg-slate-50/70 flex-shrink-0" id="shopCategoryFilterBar">
+            <button data-cat="all" class="shop-filter-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900 text-white flex-shrink-0">全部</button>
+            <button data-cat="food" class="shop-filter-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 flex-shrink-0">必吃・小吃</button>
+            <button data-cat="cafe" class="shop-filter-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 flex-shrink-0">咖啡・甜點</button>
+            <button data-cat="night" class="shop-filter-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 flex-shrink-0">居酒屋・宵夜</button>
+            <button data-cat="goods" class="shop-filter-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 flex-shrink-0">伴手禮・選物</button>
+          </div>
+
+          <!-- Shops List Scroll Area -->
+          <div id="shopsListContainer" class="p-3 space-y-2.5 overflow-y-auto max-h-[520px] divide-y divide-slate-100 flex-1">
+            <!-- Injected by JS -->
+          </div>
+
+          <!-- Drawer Footer Map Search Helper -->
+          <div class="p-3 border-t border-slate-100 bg-slate-50 text-center flex-shrink-0">
+            <a id="searchTargetGoogleMapBtn" href="https://maps.google.com" target="_blank" class="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-semibold py-0.5">
+              <span>在 Google Maps 探索附近更多景點美食</span>
+              <i class="ph-bold ph-arrow-square-out"></i>
+            </a>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <aside class="fixed bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-md border-t border-slate-200 py-2 px-4 lg:hidden pb-safe shadow-lg">
+    <div class="max-w-md mx-auto grid grid-cols-4 gap-2">
+      <button id="mobileAddStopBtn" class="flex flex-col items-center justify-center p-1.5 text-blue-600 font-semibold text-[11px] rounded-xl hover:bg-blue-50 active:scale-95 transition">
+        <i class="ph-bold ph-plus-circle text-xl"></i>
+        <span>加景點</span>
+      </button>
+      <button id="mobileAddShopBtn" class="flex flex-col items-center justify-center p-1.5 text-orange-600 font-semibold text-[11px] rounded-xl hover:bg-orange-50 active:scale-95 transition">
+        <i class="ph-bold ph-storefront text-xl"></i>
+        <span>加名店</span>
+      </button>
+      <button id="mobileOpenShopsDrawerBtn" class="flex flex-col items-center justify-center p-1.5 text-slate-700 font-semibold text-[11px] rounded-xl hover:bg-slate-100 active:scale-95 transition relative">
+        <i class="ph-bold ph-compass text-xl"></i>
+        <span>看周邊</span>
+      </button>
+      <button id="mobileOpenSettingsBtn" class="flex flex-col items-center justify-center p-1.5 text-slate-700 font-semibold text-[11px] rounded-xl hover:bg-slate-100 active:scale-95 transition">
+        <i class="ph-bold ph-floppy-disk text-xl"></i>
+        <span>備份管理</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MODAL 1: Edit / Create Timeline Stop Modal -->
+  <div id="stopModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity">
+    <div class="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl max-h-[90vh] flex flex-col border border-slate-200 shadow-2xl overflow-hidden pb-safe">
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+            <i class="ph-bold ph-map-pin text-base"></i>
+          </div>
+          <h3 id="stopModalTitle" class="text-sm sm:text-base font-bold text-slate-900">編輯行程節點</h3>
+        </div>
+        <button id="closeStopModalBtn" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">
+          <i class="ph-bold ph-x text-lg"></i>
+        </button>
+      </div>
+
+      <form id="stopForm" class="p-5 space-y-3.5 overflow-y-auto flex-1 text-xs">
+        <input type="hidden" id="formStopId">
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">節點名稱 / 景點名稱 *</label>
+          <input type="text" id="formStopName" required placeholder="例如：國寶姬路城 (白鷺城登大天守)" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs font-medium">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">分類屬性</label>
+            <select id="formStopCategory" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs font-medium">
+              <option value="sight">🏛️ 觀光・古蹟名勝</option>
+              <option value="food">🍱 必吃美食・燒肉</option>
+              <option value="transit">🚆 交通移動・鐵路</option>
+              <option value="lodging">🏨 住宿退房・放行李</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">停留時間 (分鐘)</label>
+            <input type="number" id="formStopStayMins" min="0" step="5" value="60" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs font-medium">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">出發時間 (HH:MM)</label>
+            <input type="time" id="formStopDepTime" required class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs font-semibold">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">抵達時間 (HH:MM)</label>
+            <input type="time" id="formStopArrTime" required class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs font-semibold">
+          </div>
+        </div>
+
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-2">
+          <label class="block font-bold text-slate-700">交通方式與車程描述</label>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="text" id="formStopTravelMode" placeholder="如：JR 新快速 (直達)" class="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs bg-white">
+            <input type="number" id="formStopTravelMins" placeholder="車程分鐘 (如 40)" min="0" class="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs bg-white">
+          </div>
+          <input type="text" id="formStopTravelDetail" placeholder="路線細節：由大國町搭地鐵至梅田轉 JR 新快速直達" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs bg-white">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">重點備忘 / 行前攻略重點</label>
+          <textarea id="formStopNote" rows="2" placeholder="備註預約提醒、登天守閣梯級陡峭建議穿球鞋等..." class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs leading-relaxed"></textarea>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+          <button type="button" id="deleteStopBtn" class="text-xs font-medium text-rose-600 hover:text-rose-700 hidden flex items-center gap-1 py-1">
+            <i class="ph-bold ph-trash"></i>
+            <span>刪除此節點</span>
+          </button>
+          <div class="flex items-center gap-2 ml-auto">
+            <button type="button" id="cancelStopModalBtn" class="px-3 py-2 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 font-medium text-xs">取消</button>
+            <button type="submit" class="px-4 py-2 rounded-xl text-white bg-blue-600 hover:bg-blue-700 font-bold text-xs shadow-sm shadow-blue-200">儲存節點</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: Add / Edit Street Shop Modal -->
+  <div id="shopModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl max-h-[90vh] flex flex-col border border-slate-200 shadow-2xl overflow-hidden pb-safe">
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center">
+            <i class="ph-bold ph-storefront text-base"></i>
+          </div>
+          <h3 id="shopModalTitle" class="text-sm sm:text-base font-bold text-slate-900">新增周邊街邊私房店</h3>
+        </div>
+        <button id="closeShopModalBtn" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">
+          <i class="ph-bold ph-x text-lg"></i>
+        </button>
+      </div>
+
+      <form id="shopForm" class="p-5 space-y-3.5 overflow-y-auto flex-1 text-xs">
+        <input type="hidden" id="formShopId">
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">關聯行程節點 *</label>
+          <select id="formShopStopTarget" required class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-xs font-medium">
+            <!-- Dynamically populated options -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">店名 / 特色小吃 *</label>
+          <input type="text" id="formShopName" required placeholder="如：星巴克 神戶北野異人館店" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-medium">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">分類標籤</label>
+            <select id="formShopCat" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-medium">
+              <option value="food">🍱 必吃・小吃美食</option>
+              <option value="cafe">☕ 咖啡・特色甜點</option>
+              <option value="night">🍶 居酒屋・宵夜</option>
+              <option value="goods">🛍️ 伴手禮・選物</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">消費價位</label>
+            <select id="formShopPrice" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-medium">
+              <option value="$">$ (平價小吃 500-1000¥)</option>
+              <option value="$$">$$ (中等消費 1000-3000¥)</option>
+              <option value="$$$">$$$ (精緻高檔 5000¥+)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">必點招牌與特色描述</label>
+          <textarea id="formShopDesc" rows="2" placeholder="百年洋樓改建、必嚐草莓法式水果塔、外帶酥脆炸楓葉等..." class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs"></textarea>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Google Maps 搜尋關鍵字或連結</label>
+          <input type="text" id="formShopQuery" placeholder="如：Starbucks Coffee Kobe Kitano" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs">
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+          <button type="button" id="deleteShopBtn" class="text-xs font-medium text-rose-600 hover:text-rose-700 hidden flex items-center gap-1 py-1">
+            <i class="ph-bold ph-trash"></i>
+            <span>刪除店家</span>
+          </button>
+          <div class="flex items-center gap-2 ml-auto">
+            <button type="button" id="cancelShopModalBtn" class="px-3 py-2 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 font-medium text-xs">取消</button>
+            <button type="submit" class="px-4 py-2 rounded-xl text-white bg-orange-600 hover:bg-orange-700 font-bold text-xs shadow-sm shadow-orange-200">儲存店家</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: Edit Day Theme & Info Modal -->
+  <div id="dayInfoModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5 border border-slate-200 shadow-2xl space-y-3.5 text-xs pb-safe">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <h3 class="text-sm font-bold text-slate-900">編輯當日主題標題</h3>
+        <button id="closeDayInfoModalBtn" class="p-1 text-slate-400 hover:text-slate-600"><i class="ph-bold ph-x text-lg"></i></button>
+      </div>
+
+      <div>
+        <label class="block font-bold text-slate-700 mb-1">標籤主題</label>
+        <input type="text" id="formDayTheme" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs">
+      </div>
+
+      <div>
+        <label class="block font-bold text-slate-700 mb-1">主標題</label>
+        <input type="text" id="formDayTitle" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs">
+      </div>
+
+      <div>
+        <label class="block font-bold text-slate-700 mb-1">簡要敘述</label>
+        <textarea id="formDayDesc" rows="2" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs"></textarea>
+      </div>
+
+      <div class="pt-2 flex justify-end gap-2">
+        <button id="cancelDayInfoBtn" class="px-3 py-2 rounded-xl text-slate-600 bg-slate-100 font-medium">取消</button>
+        <button id="saveDayInfoBtn" class="px-4 py-2 rounded-xl text-white bg-blue-600 font-bold">儲存更新</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: Data Management (Export / Import / Reset) Modal -->
+  <div id="dataModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5 border border-slate-200 shadow-2xl space-y-4 text-xs pb-safe">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
+            <i class="ph-bold ph-database text-base"></i>
+          </div>
+          <h3 class="text-sm font-bold text-slate-900">行程資料備份與還原</h3>
+        </div>
+        <button id="closeDataModalBtn" class="p-1 text-slate-400 hover:text-slate-600"><i class="ph-bold ph-x text-lg"></i></button>
+      </div>
+
+      <p class="text-slate-600 leading-relaxed">
+        所有編輯均保存在此瀏覽器的 <code>localStorage</code> 中。更換手機或傳給旅伴時，建議匯出 JSON 備份檔。
+      </p>
+
+      <div class="space-y-2">
+        <button id="exportJsonBtn" class="w-full py-2.5 px-3 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl font-bold flex items-center justify-center gap-1.5 transition">
+          <i class="ph-bold ph-download-simple text-sm"></i>
+          <span>匯出行程備份檔 (Download JSON)</span>
+        </button>
+
+        <label class="w-full py-2.5 px-3 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl font-bold flex items-center justify-center gap-1.5 transition cursor-pointer">
+          <i class="ph-bold ph-upload-simple text-sm"></i>
+          <span>匯入備份檔 (Import JSON)</span>
+          <input type="file" id="importJsonInput" accept=".json" class="hidden">
+        </label>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+        <button id="resetDefaultBtn" class="text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 py-1">
+          <i class="ph-bold ph-arrow-counter-clockwise"></i>
+          <span>恢復原始預設行程</span>
+        </button>
+        <button id="finishDataModalBtn" class="px-4 py-2 rounded-xl text-white bg-slate-900 font-bold">完成</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Alert / Toast Notification -->
+  <div id="toastNotification" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-xl transition-all duration-300 opacity-0 pointer-events-none flex items-center gap-2">
+    <i class="ph-bold ph-check text-emerald-400"></i>
+    <span id="toastMsg">成功更新</span>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "osaka_5d4n_travel_data_v2";
+
+    // Standard 5-day default itinerary dataset
+    const DEFAULT_ITINERARY_DATA = [
+      {
+        day: 1,
+        title: "抵達大阪 ＆ 悠閒住吉大社巡禮",
+        theme: "南大阪歷史・極上熟成和牛",
+        desc: "入住大國町民宿，漫步千年神社朱紅反橋，晚餐享用極上熟成和牛／燒肉。",
+        stops: [
+          {
+            id: "d1-s1",
+            name: "關西國際機場 (KIX) ➔ 前往大國町",
+            category: "transit",
+            stayMins: 15,
+            travelMode: "南海電鐵 空港急行",
+            travelMins: 45,
+            travelDetail: "搭南海急行至新今宮，轉地鐵1站至大國町",
+            depTime: "14:00",
+            arrTime: "14:45",
+            note: "第一航廈領行李出關，直接感應 iPhone Suica/ICOCA 快速進站。",
+            shops: [
+              { id: "sh-1", name: "551蓬萊 關西機場店", cat: "food", price: "$", desc: "大阪必嚐名物現蒸豬肉包與燒賣，出關充飢首選。", query: "551 Horai Kansai Airport" }
+            ]
+          },
+          {
+            id: "d1-s2",
+            name: "香榭麗大國 2 民宿 (入住放行李)",
+            category: "lodging",
+            stayMins: 45,
+            travelMode: "地鐵四橋線 / 南海電鐵",
+            travelMins: 20,
+            travelDetail: "大國町站搭車至住吉東或玉出站徒步 5 分",
+            depTime: "15:00",
+            arrTime: "15:20",
+            note: "房間配備大螢幕立架電視、獨立廚房衛浴，換穿舒適球鞋出門。",
+            shops: [
+              { id: "sh-2", name: "藏壽司 なんば元町店", cat: "food", price: "$$", desc: "民宿北側步行 2 分鐘，平價迴轉壽司扭蛋名店。", query: "Kura Sushi Namba Motomachi" },
+              { id: "sh-3", name: "玉出超市 (大國町店)", cat: "goods", price: "$", desc: "傳奇平價超市，採買大瓶日式綠茶、當季水果。", query: "Super Tamade Daikokucho" }
+            ]
+          },
+          {
+            id: "d1-s3",
+            name: "住吉大社 (千年古社 ＆ 反橋祈願)",
+            category: "sight",
+            stayMins: 75,
+            travelMode: "大阪地鐵 御堂筋線",
+            travelMins: 20,
+            travelDetail: "搭地鐵回大國町轉乘御堂筋線，直達心齋橋站（約 4 分鐘）",
+            depTime: "16:05",
+            arrTime: "16:25",
+            note: "走過拱形「反橋」象徵洗滌罪孽，在第一本宮尋找五大力石頭求好運。",
+            shops: [
+              { id: "sh-4", name: "末廣堂 薩摩燒老鋪", cat: "goods", price: "$", desc: "住吉大社門前銘菓，酥香紅豆和菓子配茶絕配。", query: "Suehirodo Sumiyoshi Osaka" },
+              { id: "sh-5", name: "森森舎 咖啡烘焙", cat: "cafe", desc: "南大阪精緻自家烘焙，手作陶器與抹茶甜點。", query: "Shinshinsha Cafe Osaka" }
+            ]
+          },
+          {
+            id: "d1-s4",
+            name: "晚餐：焼肉㐂舌 南船場 或 あぶりや國產牛",
+            category: "food",
+            stayMins: 90,
+            travelMode: "大阪地鐵 御堂筋線",
+            travelMins: 10,
+            travelDetail: "由心齋橋站搭御堂筋線，2站4分鐘直達大國町",
+            depTime: "18:00",
+            arrTime: "18:10",
+            note: "【首推焼肉㐂舌】：低溫熟成黑毛和牛、獨立包廂好訂；或選あぶりや厚切牛排吃到飽。",
+            shops: [
+              { id: "sh-6", name: "焼肉㐂舌 南船場店", cat: "food", price: "$$$", desc: "專精熟成黑毛和牛個室，肉質極致鮮美，支援中文線上訂位。", query: "Yakiniku Kitate Minamisenbaten" },
+              { id: "sh-7", name: "あぶりや 千日前店", cat: "food", price: "$$", desc: "國產牛吃到飽代表名店，厚切牛排與橫膈膜超人氣。", query: "Aburiya Sennichimae" }
+            ]
+          },
+          {
+            id: "d1-s5",
+            name: "返回香榭麗大國 2 休息",
+            category: "lodging",
+            stayMins: 0,
+            travelMode: "步行",
+            travelMins: 0,
+            travelDetail: "大國町站步行 4-6 分鐘回民宿",
+            depTime: "20:00",
+            arrTime: "20:05",
+            note: "洗熱水澡整理行李，確認明早前往箕面勝尾寺的搭車時刻。",
+            shops: [
+              { id: "sh-8", name: "全家便利商店 大國町站前店", cat: "night", price: "$", desc: "買瓶日本明治牛乳與甜點作為睡前宵夜。", query: "FamilyMart Daikokucho" }
+            ]
+          }
+        ]
+      },
+      {
+        day: 2,
+        title: "北大阪自然祈運 ＆ 朝日啤酒體驗",
+        theme: "萬尊達摩勝運・森林瀑布・Super Dry 見學",
+        desc: "搭御堂筋線直通箕面萱野，上山朝聖勝尾寺滿山達摩，漫步箕面瀑布吸收芬多精，下午探訪吹田朝日啤酒發祥地試飲！",
+        stops: [
+          {
+            id: "d2-s1",
+            name: "大國町 ➔ 箕面萱野站 ➔ 勝尾寺",
+            category: "transit",
+            stayMins: 10,
+            travelMode: "御堂筋線(直通北急) + 阪急巴士",
+            travelMins: 50,
+            travelDetail: "大國町直達箕面萱野站，轉乘接駁公車至勝尾寺門口",
+            depTime: "08:30",
+            arrTime: "09:20",
+            note: "北大阪急行延伸後免轉車直通箕面山腳，交通極為方便。",
+            shops: [
+              { id: "sh-9", name: "勝尾寺 達摩賣店", cat: "goods", price: "$", desc: "購買專屬許願達摩不倒翁（點右眼祈願），拍照超有震撼力。", query: "Katsuo-ji Temple Minoh" }
+            ]
+          },
+          {
+            id: "d2-s2",
+            name: "勝尾寺 (滿山達摩 ＆ 勝運祈願)",
+            category: "sight",
+            stayMins: 80,
+            travelMode: "健行自然步道 / 巴士",
+            travelMins: 20,
+            travelDetail: "漫步連接自然步道前往箕面瀑布步道起點",
+            depTime: "09:30",
+            arrTime: "09:50",
+            note: "境內階梯擺滿遊客還願的小達摩，祈求事業與人生勝運極為靈驗。",
+            shops: [
+              { id: "sh-10", name: "勝尾寺辨天茶屋", cat: "cafe", price: "$", desc: "享用達摩和菓子、宇治抹茶冰淇淋與熱茶。", query: "Katsuo-ji tea house" }
+            ]
+          },
+          {
+            id: "d2-s3",
+            name: "箕面瀑布 (落差33米壯麗飛瀑)",
+            category: "sight",
+            stayMins: 60,
+            travelMode: "健行下坡至箕面萱野 (Q's MALL)",
+            travelMins: 30,
+            travelDetail: "沿著平緩溪谷步道下行，吸收豐富負離子",
+            depTime: "11:10",
+            arrTime: "11:40",
+            note: "沿路店家現場油炸販售箕面名物「炸楓葉天婦羅（もみじの天ぷら）」。",
+            shops: [
+              { id: "sh-11", name: "久國紅仙堂 炸楓葉", cat: "goods", price: "$", desc: "百年油炸楓葉名店，口感甜脆帶有淡淡芝麻香氣。", query: "Hisakuni Kousendo Minoh" },
+              { id: "sh-12", name: "河鹿莊 (Kawakasou)", cat: "cafe", desc: "百年旅館改建的溪畔義式咖啡館，環境幽靜宜人。", query: "Minoh Kawakasou cafe" }
+            ]
+          },
+          {
+            id: "d2-s4",
+            name: "Minoh Q's MALL 午餐 (musi-vege+cafe)",
+            category: "food",
+            stayMins: 60,
+            travelMode: "北急電車 轉 JR至吹田",
+            travelMins: 30,
+            travelDetail: "由箕面萱野搭至千里中央，轉電車至 JR/阪急吹田站",
+            depTime: "12:40",
+            arrTime: "13:10",
+            note: "musi-vege+cafe 享用高纖蒸蔬菜與豆乳湯定食，健康清爽迅速回血。",
+            shops: [
+              { id: "sh-13", name: "musi-vege+cafe 箕面店", cat: "food", price: "$$", desc: "以季節蒸煮蔬菜與豆乳湯底為主打的養生和風定食。", query: "musi vege cafe Minoh Qs mall" }
+            ]
+          },
+          {
+            id: "d2-s5",
+            name: "朝日啤酒吹田工廠 (Super Dry 見學 ＆ 現壓試飲)",
+            category: "sight",
+            stayMins: 80,
+            travelMode: "JR 東海道本線",
+            travelMins: 20,
+            travelDetail: "由 JR 吹田站搭電車直達大阪站轉地鐵",
+            depTime: "14:30",
+            arrTime: "14:50",
+            note: "體驗虛擬裝罐影像，結尾在專屬酒吧試飲 2 杯極致低溫 Super Dry 生生啤酒（需提早預約）。",
+            shops: [
+              { id: "sh-14", name: "Asahi Museum 限定店", cat: "goods", price: "$", desc: "吹田工廠限定生啤酒杯與啤酒酵母點心。", query: "Asahi Breweries Suita shop" }
+            ]
+          },
+          {
+            id: "d2-s6",
+            name: "晚餐：金澤美味壽司 或 焼鳥のさくら 今里店",
+            category: "food",
+            stayMins: 90,
+            travelMode: "地鐵千日前線 / 御堂筋線",
+            travelMins: 15,
+            travelDetail: "吹田站旁壽司，或搭至今里站吃備長炭燒鳥後回大國町",
+            depTime: "17:30",
+            arrTime: "17:45",
+            note: "二選一：吹田店直送能登喉黑魚壽司；或清單名店【焼鳥のさくら】備長炭雞肉串燒配生啤！",
+            shops: [
+              { id: "sh-15", name: "Kanazawa Maimon SUSHI 吹田店", cat: "food", price: "$$$", desc: "金澤直送頂級海產，必吃喉黑魚與白蝦握壽司。", query: "Kanazawa Maimon SUSHI Suita Green Place" },
+              { id: "sh-16", name: "焼鳥のさくら 今里店", cat: "night", price: "$$", desc: "備長炭現烤大和肉雞串燒，肉汁爆滿香氣十足。", query: "Yakitori no Sakura Imazato Osaka" }
+            ]
+          }
+        ]
+      },
+      {
+        day: 3,
+        title: "日本第一名城 ＆ 神戶洋風異人館",
+        theme: "世界文化遺產白鷺城・神戶牛・北野天滿神社",
+        desc: "啟用 JR 關西鐵路周遊券 1 日券！早上直奔姬路城大天守，中午神戶三宮品嚐神戶牛，午後漫步洋風異人館與天滿神社俯瞰港灣。",
+        stops: [
+          {
+            id: "d3-s1",
+            name: "大國町 ➔ JR 大阪站 ➔ JR 姬路站",
+            category: "transit",
+            stayMins: 10,
+            travelMode: "JR 新快速 (直達姬路)",
+            travelMins: 70,
+            travelDetail: "地鐵至梅田，持 JR 周遊券搭【JR 新快速】直達姬路（約 62 分鐘）",
+            depTime: "07:50",
+            arrTime: "09:00",
+            note: "出姬路站沿大手前通步行約 15 分鐘（或搭 100 日圓巴士）抵達姬路城大門。",
+            shops: [
+              { id: "sh-17", name: "Piole 姬路車站商場", cat: "goods", price: "$$", desc: "姬路玉椿和菓子與播州名物伴手禮街。", query: "Piole Himeji" }
+            ]
+          },
+          {
+            id: "d3-s2",
+            name: "國寶姬路城 (白鷺城登大天守)",
+            category: "sight",
+            stayMins: 130,
+            travelMode: "JR 新快速 (直達神戶三之宮)",
+            travelMins: 40,
+            travelDetail: "步行回姬路站，搭乘 JR 新快速約 40 分抵達三之宮站",
+            depTime: "09:20",
+            arrTime: "12:10",
+            note: "日本保存最完整的十二現存天守之首。天守閣階梯陡峭，建議預留 2 小時細細參觀。",
+            shops: [
+              { id: "sh-18", name: "好古園 活水軒", cat: "cafe", price: "$$", desc: "姬路城旁日式庭園餐廳，邊品茶邊賞鯉魚池泉。", query: "Koko-en Kassuiken" }
+            ]
+          },
+          {
+            id: "d3-s3",
+            name: "神戶三宮午餐 (神戶牛鐵板燒)",
+            category: "food",
+            stayMins: 80,
+            travelMode: "步行爬坡沿北野坂",
+            travelMins: 15,
+            travelDetail: "三宮站沿北野坂步行約 12–15 分鐘抵達異人館街",
+            depTime: "12:15",
+            arrTime: "12:30",
+            note: "三宮站周邊餐廳林立，推薦喜山、Mouriya 或 Steakland 午間優惠套餐。",
+            shops: [
+              { id: "sh-19", name: "神戸牛 喜山 (Kiyama)", cat: "food", price: "$$$", desc: "A5 級神戶牛專門店，師傅鐵板現煎霜降牛排入口即化。", query: "Kobe Beef Kiyama Sannomiya" },
+              { id: "sh-20", name: "Steakland 神戶館", cat: "food", price: "$$", desc: "高性價比經典老牌神戶牛，午間套餐價格實惠。", query: "Steakland Kobe" }
+            ]
+          },
+          {
+            id: "d3-s4",
+            name: "北野異人館街 ＆ 北野天滿神社",
+            category: "sight",
+            stayMins: 90,
+            travelMode: "散步下坡至元町 / 神戶港",
+            travelDetail: "下山可搭地鐵海岸線至港元町，或步行漫步至海濱公園",
+            depTime: "14:15",
+            arrTime: "14:35",
+            note: "登上北野天滿神社鳥居長階梯，俯瞰紅磚風見雞洋樓與神戶港海景同框絕景！",
+            shops: [
+              { id: "sh-21", name: "星巴克 神戶北野異人館店", cat: "cafe", price: "$", desc: "百年登錄有形文化財洋樓改建，保留木造復古客廳氛圍。", query: "Starbucks Coffee Kobe Kitano Ijinkan" },
+              { id: "sh-22", name: "風見雞本舖 (神戶布丁)", cat: "goods", price: "$", desc: "熱銷百萬盒神戶金牌布丁，淋上微苦焦糖醬濃醇滑口。", query: "Kazamidori Honpo Kobe" }
+            ]
+          },
+          {
+            id: "d3-s5",
+            name: "神戶臨海樂園 ＆ 美利堅公園夜景 ➔ 回大阪",
+            category: "sight",
+            stayMins: 80,
+            travelMode: "JR 新快速 (直達大阪站)",
+            travelMins: 25,
+            travelDetail: "JR 神戶站搭新快速至大阪站（約 25 分），轉御堂筋線回大國町",
+            depTime: "17:30",
+            arrTime: "18:00",
+            note: "吹拂海風，欣賞全新整修點燈的神戶港塔（Port Tower）與紅色摩天輪倒映在海面上璀璨夜景。",
+            shops: [
+              { id: "sh-23", name: "Umie MOSAIC 海景露台", cat: "food", price: "$$", desc: "面海露台邊吃神戶炸肉餅手作披薩邊賞遊輪港景。", query: "Kobe Harborland umie Mosaic" },
+              { id: "sh-24", name: "Frantz 神戶魔法之壺布丁", cat: "goods", price: "$$", desc: "裝在小陶壺裡的綿密布丁，神戶必買手信名冠關西。", query: "Frantz Kobe Harborland" }
+            ]
+          }
+        ]
+      },
+      {
+        day: 4,
+        title: "日本環球影城 USJ 全日狂歡",
+        theme: "任天堂世界・哈利波特・飛天翼龍震撼體驗",
+        desc: "清晨早起直奔 USJ！開園第一波衝進超級任天堂世界玩瑪利歐賽車，全日暢玩禁忌之旅與刺激遊樂設施。",
+        stops: [
+          {
+            id: "d4-s1",
+            name: "大國町 ➔ JR 今宮站 ➔ 環球影城站",
+            category: "transit",
+            stayMins: 10,
+            travelMode: "JR 環狀線 + 櫻島線",
+            travelMins: 30,
+            travelDetail: "民宿步行 8 分至【JR 今宮站】，搭至西九條轉櫻島線直達 USJ",
+            depTime: "06:45",
+            arrTime: "07:15",
+            note: "香榭麗大國 2 離 JR 今宮站極近，約 30 分鐘即可抵達樂園大門口！",
+            shops: [
+              { id: "sh-25", name: "Universal CityWalk 飯糰", cat: "food", price: "$", desc: "入園前快速外帶現捏手做飯糰與熱咖啡充實體力。", query: "Universal Citywalk Osaka" }
+            ]
+          },
+          {
+            id: "d4-s2",
+            name: "開園首衝：超級任天堂世界",
+            category: "sight",
+            stayMins: 180,
+            travelMode: "園區步行",
+            travelMins: 10,
+            travelDetail: "開園第一時間無整理券直接衝入，或使用 App 抽整理券",
+            depTime: "07:30",
+            arrTime: "07:40",
+            note: "暢玩【瑪利歐賽車～庫巴的挑戰書～】、戴上能量手環敲磚塊拿金幣。",
+            shops: [
+              { id: "sh-26", name: "奇諾比奧咖啡店 (Kinopio's Cafe)", cat: "food", price: "$$", desc: "超級蘑菇披薩碗、無敵星米飯，造型吸睛美味度驚豔！", query: "Kinopio's Cafe USJ" },
+              { id: "sh-27", name: "1UP 工廠紀念品店", cat: "goods", price: "$$", desc: "瑪利歐賽車帽子、耀西連帽斗篷與限定能量手環。", query: "1-UP Factory USJ" }
+            ]
+          },
+          {
+            id: "d4-s3",
+            name: "哈利波特禁忌之旅 ＆ 活米村",
+            category: "sight",
+            stayMins: 120,
+            travelMode: "園區步行",
+            travelMins: 10,
+            travelDetail: "穿過巨石陣森林，造訪白雪皚皚活米村與霍格華茲城堡",
+            depTime: "11:30",
+            arrTime: "11:40",
+            note: "體驗【哈利波特禁忌之旅 4K3D】，喝杯招牌冰涼奶油啤酒。",
+            shops: [
+              { id: "sh-28", name: "三根掃帚酒吧", cat: "food", price: "$$", desc: "必喝招牌「奶油啤酒（冰涼氣泡/熱肉桂奶霜）」與英式烤雞餐盤。", query: "Three Broomsticks USJ" },
+              { id: "sh-29", name: "蜂蜜公爵糖果屋", cat: "goods", price: "$", desc: "買盒帕蒂全風味豆與附巫師立體卡片的巧克力蛙。", query: "Honeydukes USJ" }
+            ]
+          },
+          {
+            id: "d4-s4",
+            name: "飛天翼龍 ＆ 小小兵樂園 ➔ 返回民宿",
+            category: "sight",
+            stayMins: 200,
+            travelMode: "JR 櫻島線 + 環狀線",
+            travelMins: 30,
+            travelDetail: "閉園後搭 JR 經西九條回 JR 今宮站，步行回大國町民宿",
+            depTime: "14:30",
+            arrTime: "15:00",
+            note: "挑戰世界最長最陡懸吊式過山車【飛天翼龍】，善用 Single Rider 走道大幅省時。",
+            shops: [
+              { id: "sh-30", name: "侏儸紀燻烤巨大火雞腿", cat: "food", price: "$$", desc: "樂園必啃手拿美食！超大份量燻烤火雞腿，肉汁豐富飽足。", query: "USJ Jurassic Turkey Leg" }
+            ]
+          }
+        ]
+      },
+      {
+        day: 5,
+        title: "海濱 Outlet 採購 ＆ 6分鐘直達機場返台",
+        theme: "臨空城名品血拚・6分鐘電車直達KIX",
+        desc: "大國町退房出發，南海電鐵直達關西最大海濱臨空城 Outlet 大採購，寄放行李血拚完畢後，搭電車 1 站（6分鐘）直抵關西機場登機！",
+        stops: [
+          {
+            id: "d5-s1",
+            name: "香榭麗大國 2 退房 ➔ 南海電鐵直達臨空城",
+            category: "transit",
+            stayMins: 15,
+            travelMode: "南海電鐵 空港急行",
+            travelMins: 40,
+            travelDetail: "大國町搭地鐵1站至難波，搭【南海空港急行】直達臨空城站（約 38 分）",
+            depTime: "09:30",
+            arrTime: "10:10",
+            note: "臨空城站出站走天橋 6 分鐘直達 Outlet，車站內與 Outlet 均設有大型行李寄物櫃。",
+            shops: [
+              { id: "sh-31", name: "臨空城 遊客服務中心寄物處", cat: "goods", price: "$", desc: "大型置物櫃滿載時，可至服務處人工寄放大件行李箱。", query: "Rinku Premium Outlets service center" }
+            ]
+          },
+          {
+            id: "d5-s2",
+            name: "臨空城 Outlet (Rinku Premium Outlets) 大採購",
+            category: "sight",
+            stayMins: 180,
+            travelMode: "園區步行",
+            travelMins: 10,
+            travelDetail: "坐擁大阪灣海景，分為 Main 棟與 Seaside 棟",
+            depTime: "10:30",
+            arrTime: "10:40",
+            note: "Adidas、Nike、Snow Peak、BEAMS、Coach、Le Creuset 折扣極高，出示護照服務台領優惠券手冊。",
+            shops: [
+              { id: "sh-32", name: "Snow Peak Cafe 臨空店", cat: "cafe", price: "$$", desc: "露營風格海景咖啡廳，坐在一流露營椅上品嚐滴漏單品咖啡與厚鬆餅。", query: "Snow Peak Rinku Premium Outlets" },
+              { id: "sh-33", name: "Kua'Aina 夏威夷漢堡", cat: "food", price: "$$", desc: "火山熔岩現烤厚切漢堡排配熟成酪梨，肉汁豐腴薯條酥脆。", query: "Kua Aina Rinku Outlets" }
+            ]
+          },
+          {
+            id: "d5-s3",
+            name: "臨空城站 ➔ 關西國際機場 (KIX) 【關鍵 6 分鐘】",
+            category: "transit",
+            stayMins: 10,
+            travelMode: "南海急行 / JR關空快速 (僅1站)",
+            travelMins: 6,
+            travelDetail: "走回臨空城站，刷卡搭南海急行或 JR 關空快速【跨海大橋 1 站 6 分鐘直達】",
+            depTime: "14:10",
+            arrTime: "14:16",
+            note: "【超省時優勢】：車程只需 5～6 分鐘，不塞車超準點，不用在市區提著戰利品狼狽轉車！",
+            shops: [
+              { id: "sh-34", name: "KIX 免稅店伴手禮大街", cat: "goods", price: "$$", desc: "入關後購買薯條三兄弟、白色戀人、ROYCE生巧克力與獺祭二割三分。", query: "Kansai Airport Duty Free" }
+            ]
+          },
+          {
+            id: "d5-s4",
+            name: "關西國際機場辦理退稅、登機 ➔ 平安返台",
+            category: "sight",
+            stayMins: 120,
+            travelMode: "國際航班",
+            travelMins: 0,
+            travelDetail: "T1 直接由二樓出站走空橋進報到大廳；T2 搭 Aeroplaza 免費接駁車",
+            depTime: "14:30",
+            arrTime: "16:30",
+            note: "起飛前至少 2.5 小時抵達機場報到出關，退稅並做最後免稅品補貨。",
+            shops: [
+              { id: "sh-35", name: "町家小路 (KIX美食街)", cat: "food", price: "$$", desc: "出關前最後品嚐道地烏龍麵與日式炸蝦丼飯。", query: "Machiya Koji Kansai Airport" }
+            ]
+          }
+        ]
+      }
+    ];
+
+    // --- STATE MANAGEMENT ---
+    let appData = [];
+    let currentDayIndex = 0;
+    let selectedStopId = null;
+    let currentShopCategory = 'all';
+
+    function initData() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          appData = JSON.parse(stored);
+        } else {
+          appData = JSON.parse(JSON.stringify(DEFAULT_ITINERARY_DATA));
+          saveData(false);
+        }
+      } catch (err) {
+        console.error("Failed to parse stored itinerary, fallback to default", err);
+        appData = JSON.parse(JSON.stringify(DEFAULT_ITINERARY_DATA));
+      }
+    }
+
+    function saveData(notify = true) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+        if (notify) showToast("已自動儲存至本機");
+      } catch (e) {
+        console.error("Storage full or error", e);
+        showToast("儲存失敗，請檢查瀏覽器空間");
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastNotification');
+      const toastMsg = document.getElementById('toastMsg');
+      toastMsg.textContent = msg;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 2000);
+    }
+
+    function renderDayTabs() {
+      const container = document.getElementById('dayTabsList');
+      container.innerHTML = '';
+
+      appData.forEach((day, index) => {
+        const isActive = index === currentDayIndex;
+        const btn = document.createElement('button');
+        btn.className = `flex-shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+          isActive 
+            ? 'bg-blue-600 text-white shadow-sm shadow-blue-200 ring-2 ring-blue-600/20' 
+            : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+        }`;
+        btn.innerHTML = `
+          <span>Day ${day.day}</span>
+          <span class="text-[10px] opacity-80 font-normal hidden sm:inline">・${day.theme.split('・')[0]}</span>
+        `;
+        btn.addEventListener('click', () => {
+          currentDayIndex = index;
+          selectedStopId = null;
+          renderAll();
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    function renderDayHeader() {
+      const currentDay = appData[currentDayIndex];
+      document.getElementById('currentDayBadge').textContent = `Day ${currentDay.day}`;
+      document.getElementById('currentDayTheme').textContent = currentDay.theme;
+      document.getElementById('currentDayTitle').textContent = currentDay.title;
+      document.getElementById('currentDayDesc').textContent = currentDay.desc;
+      document.getElementById('stopsCountBadge').textContent = currentDay.stops.length;
+    }
+
+    function renderTimeline() {
+      const currentDay = appData[currentDayIndex];
+      const container = document.getElementById('timelineContainer');
+      container.innerHTML = '';
+
+      if (currentDay.stops.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-2xl p-8 text-center text-slate-400 space-y-2 border border-dashed border-slate-300">
+            <i class="ph-bold ph-calendar-plus text-3xl"></i>
+            <p class="text-xs">今天還沒有任何行程節點，點擊上方「新增節點」開始規劃！</p>
+          </div>
+        `;
+        return;
+      }
+
+      currentDay.stops.forEach((stop, idx) => {
+        const isSelected = selectedStopId === stop.id;
+        const isFirst = idx === 0;
+        const isLast = idx === currentDay.stops.length - 1;
+
+        let badgeStyle = "bg-blue-50 text-blue-700 border-blue-200";
+        let iconTag = "ph-map-pin";
+        if (stop.category === 'food') {
+          badgeStyle = "bg-amber-50 text-amber-700 border-amber-200";
+          iconTag = "ph-fork-knife";
+        } else if (stop.category === 'transit') {
+          badgeStyle = "bg-slate-100 text-slate-700 border-slate-200";
+          iconTag = "ph-train";
+        } else if (stop.category === 'lodging') {
+          badgeStyle = "bg-purple-50 text-purple-700 border-purple-200";
+          iconTag = "ph-house-line";
+        }
+
+        const item = document.createElement('div');
+        item.className = `timeline-item relative pl-9 sm:pl-11 transition group`;
+        item.innerHTML = `
+          <!-- Dot on timeline -->
+          <div class="absolute left-2.5 top-4 w-4 h-4 rounded-full ${isSelected ? 'bg-blue-600 ring-4 ring-blue-100 scale-110' : 'bg-slate-300'} flex items-center justify-center transition-all z-10">
+            <div class="w-1.5 h-1.5 rounded-full bg-white"></div>
+          </div>
+
+          <!-- Main Card -->
+          <div class="bg-white rounded-2xl p-3.5 sm:p-4 border transition-all ${
+            isSelected 
+              ? 'border-blue-500 shadow-md ring-1 ring-blue-500/20' 
+              : 'border-slate-200/90 hover:border-slate-300 hover:shadow-sm'
+          }">
+            
+            <!-- Card Top: Time, Category Badge, and Edit Utilities -->
+            <div class="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-xs font-bold text-slate-900 font-mono tracking-tight bg-slate-100 px-2 py-0.5 rounded-md">
+                  ${stop.depTime} → ${stop.arrTime}
+                </span>
+                ${stop.stayMins > 0 ? `<span class="text-[10px] font-medium text-slate-400">停 ${stop.stayMins} 分</span>` : ''}
+                <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded border ${badgeStyle} flex items-center gap-0.5">
+                  <i class="ph-bold ${iconTag}"></i>
+                  <span>${stop.category.toUpperCase()}</span>
+                </span>
+              </div>
+
+              <!-- Reorder and Edit Actions -->
+              <div class="flex items-center gap-1">
+                <button data-action="move-up" class="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-20" ${isFirst ? 'disabled' : ''} title="上移">
+                  <i class="ph-bold ph-caret-up text-xs"></i>
+                </button>
+                <button data-action="move-down" class="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-20" ${isLast ? 'disabled' : ''} title="下移">
+                  <i class="ph-bold ph-caret-down text-xs"></i>
+                </button>
+                <button data-action="edit" class="p-1 text-blue-600 hover:bg-blue-50 rounded-md transition" title="編輯此節點">
+                  <i class="ph-bold ph-pencil-simple text-xs"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Card Body -->
+            <div class="mt-2.5 space-y-2">
+              <div class="flex items-start justify-between gap-2">
+                <h4 class="text-xs sm:text-sm font-bold text-slate-900 leading-snug group-hover:text-blue-600 transition">
+                  ${stop.name}
+                </h4>
+                <button data-action="select-shops" class="text-[11px] font-medium text-orange-600 hover:text-orange-700 flex-shrink-0 flex items-center gap-0.5 px-2 py-0.5 rounded-lg bg-orange-50 border border-orange-100">
+                  <i class="ph-bold ph-storefront"></i>
+                  <span>周邊 (${stop.shops ? stop.shops.length : 0})</span>
+                </button>
+              </div>
+
+              <!-- Transit instruction if present -->
+              ${stop.travelMode ? `
+                <div class="bg-slate-50 rounded-xl p-2 text-[11px] text-slate-600 border border-slate-100 flex items-center gap-2">
+                  <i class="ph-bold ph-path text-slate-400 text-xs flex-shrink-0"></i>
+                  <span class="font-bold text-slate-800">${stop.travelMode}</span>
+                  ${stop.travelMins ? `<span class="text-slate-400">| 約 ${stop.travelMins} 分</span>` : ''}
+                  <span class="text-slate-500 truncate">${stop.travelDetail || ''}</span>
+                </div>
+              ` : ''}
+
+              <!-- Note -->
+              ${stop.note ? `
+                <p class="text-[11px] text-slate-500 leading-relaxed bg-amber-50/40 p-2 rounded-xl border border-amber-100/50">
+                  <span class="font-bold text-amber-900">💡 </span>${stop.note}
+                </p>
+              ` : ''}
+            </div>
+
+          </div>
+        `;
+
+        // Card Click Interactions
+        item.querySelector('[data-action="select-shops"]').addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectedStopId = stop.id;
+          renderTimeline();
+          renderShops();
+          openShopsDrawer();
+        });
+
+        item.querySelector('[data-action="edit"]').addEventListener('click', (e) => {
+          e.stopPropagation();
+          openEditStopModal(stop);
+        });
+
+        const upBtn = item.querySelector('[data-action="move-up"]');
+        if (upBtn) {
+          upBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (idx > 0) {
+              const temp = currentDay.stops[idx];
+              currentDay.stops[idx] = currentDay.stops[idx - 1];
+              currentDay.stops[idx - 1] = temp;
+              saveData();
+              renderTimeline();
+            }
+          });
+        }
+
+        const downBtn = item.querySelector('[data-action="move-down"]');
+        if (downBtn) {
+          downBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (idx < currentDay.stops.length - 1) {
+              const temp = currentDay.stops[idx];
+              currentDay.stops[idx] = currentDay.stops[idx + 1];
+              currentDay.stops[idx + 1] = temp;
+              saveData();
+              renderTimeline();
+            }
+          });
+        }
+
+        // Tap on card body sets selection
+        item.addEventListener('click', () => {
+          selectedStopId = selectedStopId === stop.id ? null : stop.id;
+          renderTimeline();
+          renderShops();
+        });
+
+        container.appendChild(item);
+      });
+    }
+
+    function renderShops() {
+      const currentDay = appData[currentDayIndex];
+      const container = document.getElementById('shopsListContainer');
+      const targetBadge = document.getElementById('shopTargetStopName');
+      container.innerHTML = '';
+
+      let targetStops = currentDay.stops;
+      if (selectedStopId) {
+        const found = currentDay.stops.find(s => s.id === selectedStopId);
+        if (found) {
+          targetStops = [found];
+          targetBadge.textContent = `📍 ${found.name.split(' (')[0].split(' ➔')[0]}`;
+        }
+      } else {
+        targetBadge.textContent = `📍 全部當日景點 (${currentDay.stops.reduce((acc, s) => acc + (s.shops ? s.shops.length : 0), 0)} 家)`;
+      }
+
+      // Consolidate shops
+      let allShops = [];
+      targetStops.forEach(stop => {
+        if (stop.shops && Array.isArray(stop.shops)) {
+          stop.shops.forEach(sh => {
+            allShops.push({ ...sh, parentStopId: stop.id, parentStopName: stop.name });
+          });
+        }
+      });
+
+      // Filter category
+      if (currentShopCategory !== 'all') {
+        allShops = allShops.filter(s => s.cat === currentShopCategory);
+      }
+
+      if (allShops.length === 0) {
+        container.innerHTML = `
+          <div class="py-12 text-center text-slate-400 space-y-2">
+            <i class="ph-bold ph-storefront text-3xl"></i>
+            <p class="text-xs">目前沒有符合條件的街邊店推薦</p>
+            <button id="emptyAddShopBtn" class="px-3 py-1 text-xs font-semibold text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100">立即新增第一家</button>
+          </div>
+        `;
+        const addBtn = document.getElementById('emptyAddShopBtn');
+        if (addBtn) addBtn.addEventListener('click', () => openAddShopModal());
+        return;
+      }
+
+      allShops.forEach(shop => {
+        let catLabel = "小吃美食";
+        let catColor = "bg-amber-50 text-amber-700 border-amber-200";
+        if (shop.cat === 'cafe') {
+          catLabel = "咖啡甜點";
+          catColor = "bg-rose-50 text-rose-700 border-rose-200";
+        } else if (shop.cat === 'goods') {
+          catLabel = "伴手禮";
+          catColor = "bg-emerald-50 text-emerald-700 border-emerald-200";
+        } else if (shop.cat === 'night') {
+          catLabel = "居酒屋宵夜";
+          catColor = "bg-purple-50 text-purple-700 border-purple-200";
+        }
+
+        const row = document.createElement('div');
+        row.className = "pt-2.5 pb-2.5 group hover:bg-slate-50/80 rounded-xl px-2 transition";
+        row.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div class="space-y-0.5 flex-1 min-w-0">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-[9px] font-bold px-1.5 py-0.2 rounded border ${catColor}">${catLabel}</span>
+                <span class="text-[10px] font-semibold text-slate-400">${shop.price || '$'}</span>
+                <span class="text-[10px] text-slate-400 truncate max-w-[120px]">@ ${shop.parentStopName.split(' (')[0]}</span>
+              </div>
+              <h5 class="text-xs font-bold text-slate-900 group-hover:text-orange-600 transition truncate">${shop.name}</h5>
+              <p class="text-[11px] text-slate-500 leading-relaxed">${shop.desc || '無特別備註'}</p>
+            </div>
+
+            <div class="flex items-center gap-1 flex-shrink-0 pt-1">
+              <button data-action="edit-shop" class="p-1 text-slate-400 hover:text-slate-700 rounded-md hover:bg-slate-100 transition" title="編輯此店">
+                <i class="ph-bold ph-pencil-simple text-xs"></i>
+              </button>
+              <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shop.query || shop.name)}" target="_blank" class="p-1 text-blue-600 hover:text-blue-800 rounded-md hover:bg-blue-50 transition" title="在 Google Maps 開啟">
+                <i class="ph-bold ph-arrow-square-out text-xs"></i>
+              </a>
+            </div>
+          </div>
+        `;
+
+        row.querySelector('[data-action="edit-shop"]').addEventListener('click', () => {
+          openEditShopModal(shop);
+        });
+
+        container.appendChild(row);
+      });
+
+      // Update bottom maps link query
+      const mapBtn = document.getElementById('searchTargetGoogleMapBtn');
+      const searchTarget = selectedStopId && targetStops[0] 
+        ? targetStops[0].name.split(' (')[0]
+        : `${currentDay.title.split(' ')[0]} 美食`;
+      mapBtn.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(searchTarget)}`;
+    }
+
+    function openAddStopModal() {
+      const currentDay = appData[currentDayIndex];
+      document.getElementById('stopModalTitle').textContent = `Day ${currentDay.day} - 新增行程節點`;
+      document.getElementById('formStopId').value = '';
+      document.getElementById('formStopName').value = '';
+      document.getElementById('formStopCategory').value = 'sight';
+      document.getElementById('formStopStayMins').value = 60;
+      
+      // Auto time sequence
+      let lastArr = "09:00";
+      if (currentDay.stops.length > 0) {
+        lastArr = currentDay.stops[currentDay.stops.length - 1].arrTime;
+      }
+      document.getElementById('formStopDepTime').value = lastArr;
+      document.getElementById('formStopArrTime').value = lastArr;
+      document.getElementById('formStopTravelMode').value = '';
+      document.getElementById('formStopTravelMins').value = '';
+      document.getElementById('formStopTravelDetail').value = '';
+      document.getElementById('formStopNote').value = '';
+      document.getElementById('deleteStopBtn').classList.add('hidden');
+
+      document.getElementById('stopModal').classList.remove('hidden');
+    }
+
+    function openEditStopModal(stop) {
+      document.getElementById('stopModalTitle').textContent = `編輯節點：${stop.name.split(' (')[0]}`;
+      document.getElementById('formStopId').value = stop.id;
+      document.getElementById('formStopName').value = stop.name;
+      document.getElementById('formStopCategory').value = stop.category || 'sight';
+      document.getElementById('formStopStayMins').value = stop.stayMins || 0;
+      document.getElementById('formStopDepTime').value = stop.depTime || "09:00";
+      document.getElementById('formStopArrTime').value = stop.arrTime || "10:00";
+      document.getElementById('formStopTravelMode').value = stop.travelMode || '';
+      document.getElementById('formStopTravelMins').value = stop.travelMins || '';
+      document.getElementById('formStopTravelDetail').value = stop.travelDetail || '';
+      document.getElementById('formStopNote').value = stop.note || '';
+      document.getElementById('deleteStopBtn').classList.remove('hidden');
+
+      document.getElementById('stopModal').classList.remove('hidden');
+    }
+
+    function handleStopFormSubmit(e) {
+      e.preventDefault();
+      const currentDay = appData[currentDayIndex];
+      const stopId = document.getElementById('formStopId').value;
+
+      const stopData = {
+        name: document.getElementById('formStopName').value.trim(),
+        category: document.getElementById('formStopCategory').value,
+        stayMins: parseInt(document.getElementById('formStopStayMins').value) || 0,
+        depTime: document.getElementById('formStopDepTime').value,
+        arrTime: document.getElementById('formStopArrTime').value,
+        travelMode: document.getElementById('formStopTravelMode').value.trim(),
+        travelMins: parseInt(document.getElementById('formStopTravelMins').value) || 0,
+        travelDetail: document.getElementById('formStopTravelDetail').value.trim(),
+        note: document.getElementById('formStopNote').value.trim(),
+      };
+
+      if (stopId) {
+        // Edit existing
+        const index = currentDay.stops.findIndex(s => s.id === stopId);
+        if (index !== -1) {
+          currentDay.stops[index] = { ...currentDay.stops[index], ...stopData };
+        }
+      } else {
+        // Create new
+        const newStop = {
+          ...stopData,
+          id: `stop-${Date.now()}`,
+          shops: []
+        };
+        currentDay.stops.push(newStop);
+      }
+
+      saveData();
+      document.getElementById('stopModal').classList.add('hidden');
+      renderTimeline();
+      renderShops();
+    }
+
+    function handleDeleteStop() {
+      const stopId = document.getElementById('formStopId').value;
+      if (!stopId) return;
+      const currentDay = appData[currentDayIndex];
+      currentDay.stops = currentDay.stops.filter(s => s.id !== stopId);
+      if (selectedStopId === stopId) selectedStopId = null;
+      saveData();
+      document.getElementById('stopModal').classList.add('hidden');
+      renderTimeline();
+      renderShops();
+      showToast("節點已刪除");
+    }
+
+    function populateShopTargetSelect(selectedTargetId = null) {
+      const select = document.getElementById('formShopStopTarget');
+      select.innerHTML = '';
+      const currentDay = appData[currentDayIndex];
+
+      currentDay.stops.forEach(stop => {
+        const opt = document.createElement('option');
+        opt.value = stop.id;
+        opt.textContent = stop.name;
+        if (selectedTargetId && selectedTargetId === stop.id) {
+          opt.selected = true;
+        } else if (!selectedTargetId && selectedStopId === stop.id) {
+          opt.selected = true;
+        }
+        select.appendChild(opt);
+      });
+    }
+
+    function openAddShopModal() {
+      const currentDay = appData[currentDayIndex];
+      if (currentDay.stops.length === 0) {
+        showToast("請先新增至少一個行程節點！");
+        return;
+      }
+      populateShopTargetSelect();
+      document.getElementById('shopModalTitle').textContent = "新增周邊街邊私房店";
+      document.getElementById('formShopId').value = '';
+      document.getElementById('formShopName').value = '';
+      document.getElementById('formShopCat').value = 'food';
+      document.getElementById('formShopPrice').value = '$';
+      document.getElementById('formShopDesc').value = '';
+      document.getElementById('formShopQuery').value = '';
+      document.getElementById('deleteShopBtn').classList.add('hidden');
+      document.getElementById('shopModal').classList.remove('hidden');
+    }
+
+    function openEditShopModal(shop) {
+      populateShopTargetSelect(shop.parentStopId);
+      document.getElementById('shopModalTitle').textContent = `編輯店家：${shop.name}`;
+      document.getElementById('formShopId').value = shop.id;
+      document.getElementById('formShopName').value = shop.name;
+      document.getElementById('formShopCat').value = shop.cat || 'food';
+      document.getElementById('formShopPrice').value = shop.price || '$';
+      document.getElementById('formShopDesc').value = shop.desc || '';
+      document.getElementById('formShopQuery').value = shop.query || shop.name;
+      document.getElementById('deleteShopBtn').classList.remove('hidden');
+      document.getElementById('shopModal').classList.remove('hidden');
+    }
+
+    function handleShopFormSubmit(e) {
+      e.preventDefault();
+      const shopId = document.getElementById('formShopId').value;
+      const targetStopId = document.getElementById('formShopStopTarget').value;
+      const currentDay = appData[currentDayIndex];
+
+      const shopData = {
+        name: document.getElementById('formShopName').value.trim(),
+        cat: document.getElementById('formShopCat').value,
+        price: document.getElementById('formShopPrice').value,
+        desc: document.getElementById('formShopDesc').value.trim(),
+        query: document.getElementById('formShopQuery').value.trim() || document.getElementById('formShopName').value.trim()
+      };
+
+      if (shopId) {
+        // Remove from original
+        currentDay.stops.forEach(s => {
+          if (s.shops) s.shops = s.shops.filter(item => item.id !== shopId);
+        });
+        // Put in new or target
+        const destStop = currentDay.stops.find(s => s.id === targetStopId);
+        if (destStop) {
+          if (!destStop.shops) destStop.shops = [];
+          destStop.shops.push({ ...shopData, id: shopId });
+        }
+      } else {
+        const destStop = currentDay.stops.find(s => s.id === targetStopId);
+        if (destStop) {
+          if (!destStop.shops) destStop.shops = [];
+          destStop.shops.push({ ...shopData, id: `sh-${Date.now()}` });
+        }
+      }
+
+      saveData();
+      document.getElementById('shopModal').classList.add('hidden');
+      renderTimeline();
+      renderShops();
+      showToast("店家資料已更新");
+    }
+
+    function handleDeleteShop() {
+      const shopId = document.getElementById('formShopId').value;
+      if (!shopId) return;
+      const currentDay = appData[currentDayIndex];
+      currentDay.stops.forEach(s => {
+        if (s.shops) s.shops = s.shops.filter(sh => sh.id !== shopId);
+      });
+      saveData();
+      document.getElementById('shopModal').classList.add('hidden');
+      renderTimeline();
+      renderShops();
+      showToast("店家已刪除");
+    }
+
+    function openDayInfoModal() {
+      const currentDay = appData[currentDayIndex];
+      document.getElementById('formDayTheme').value = currentDay.theme;
+      document.getElementById('formDayTitle').value = currentDay.title;
+      document.getElementById('formDayDesc').value = currentDay.desc;
+      document.getElementById('dayInfoModal').classList.remove('hidden');
+    }
+
+    function handleSaveDayInfo() {
+      const currentDay = appData[currentDayIndex];
+      currentDay.theme = document.getElementById('formDayTheme').value.trim();
+      currentDay.title = document.getElementById('formDayTitle').value.trim();
+      currentDay.desc = document.getElementById('formDayDesc').value.trim();
+      saveData();
+      document.getElementById('dayInfoModal').classList.add('hidden');
+      renderDayTabs();
+      renderDayHeader();
+      showToast("主題標題已更新");
+    }
+
+    // Mobile Drawer Drawer Controls
+    function openShopsDrawer() {
+      const drawer = document.getElementById('shopsDrawerContainer');
+      drawer.classList.remove('hidden');
+    }
+
+    function closeShopsDrawer() {
+      const drawer = document.getElementById('shopsDrawerContainer');
+      drawer.classList.add('hidden');
+    }
+
+    // JSON Export / Import / Reset to Default
+    function exportJsonFile() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `Osaka_5D4N_Itinerary_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast("已匯出 JSON 備份檔");
+    }
+
+    function importJsonFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const parsed = JSON.parse(event.target.result);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            appData = parsed;
+            saveData();
+            renderAll();
+            document.getElementById('dataModal').classList.add('hidden');
+            showToast("成功還原行程檔案！");
+          } else {
+            showToast("無效的 JSON 格式");
+          }
+        } catch (err) {
+          showToast("解析失敗，非合法檔案");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetToDefault() {
+      appData = JSON.parse(JSON.stringify(DEFAULT_ITINERARY_DATA));
+      selectedStopId = null;
+      saveData();
+      document.getElementById('dataModal').classList.add('hidden');
+      renderAll();
+      showToast("已恢復原始預設行程！");
+    }
+
+    function setupEventListeners() {
+      // Modals Open
+      document.getElementById('addStopHeaderBtn').addEventListener('click', openAddStopModal);
+      document.getElementById('mobileAddStopBtn').addEventListener('click', openAddStopModal);
+      document.getElementById('addShopQuickBtn').addEventListener('click', openAddShopModal);
+      document.getElementById('mobileAddShopBtn').addEventListener('click', openAddShopModal);
+      document.getElementById('editDayInfoBtn').addEventListener('click', openDayInfoModal);
+      
+      document.getElementById('dataSettingsBtn').addEventListener('click', () => document.getElementById('dataModal').classList.remove('hidden'));
+      document.getElementById('mobileOpenSettingsBtn').addEventListener('click', () => document.getElementById('dataModal').classList.remove('hidden'));
+
+      // Modals Close
+      document.getElementById('closeStopModalBtn').addEventListener('click', () => document.getElementById('stopModal').classList.add('hidden'));
+      document.getElementById('cancelStopModalBtn').addEventListener('click', () => document.getElementById('stopModal').classList.add('hidden'));
+      document.getElementById('closeShopModalBtn').addEventListener('click', () => document.getElementById('shopModal').classList.add('hidden'));
+      document.getElementById('cancelShopModalBtn').addEventListener('click', () => document.getElementById('shopModal').classList.add('hidden'));
+      document.getElementById('closeDayInfoModalBtn').addEventListener('click', () => document.getElementById('dayInfoModal').classList.add('hidden'));
+      document.getElementById('cancelDayInfoBtn').addEventListener('click', () => document.getElementById('dayInfoModal').classList.add('hidden'));
+      document.getElementById('closeDataModalBtn').addEventListener('click', () => document.getElementById('dataModal').classList.add('hidden'));
+      document.getElementById('finishDataModalBtn').addEventListener('click', () => document.getElementById('dataModal').classList.add('hidden'));
+
+      // Drawer Toggles
+      document.getElementById('viewToggleShopsBtn').addEventListener('click', openShopsDrawer);
+      document.getElementById('mobileOpenShopsDrawerBtn').addEventListener('click', openShopsDrawer);
+      document.getElementById('closeDrawerBtn').addEventListener('click', closeShopsDrawer);
+
+      // Forms Submit
+      document.getElementById('stopForm').addEventListener('submit', handleStopFormSubmit);
+      document.getElementById('deleteStopBtn').addEventListener('click', handleDeleteStop);
+      document.getElementById('shopForm').addEventListener('submit', handleShopFormSubmit);
+      document.getElementById('deleteShopBtn').addEventListener('click', handleDeleteShop);
+      document.getElementById('saveDayInfoBtn').addEventListener('click', handleSaveDayInfo);
+
+      // Data I/O
+      document.getElementById('exportJsonBtn').addEventListener('click', exportJsonFile);
+      document.getElementById('importJsonInput').addEventListener('change', importJsonFile);
+      document.getElementById('resetDefaultBtn').addEventListener('click', resetToDefault);
+
+      // Shop Category Filter Buttons
+      const filterBtns = document.querySelectorAll('.shop-filter-btn');
+      filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          filterBtns.forEach(b => {
+            b.classList.remove('bg-slate-900', 'text-white');
+            b.classList.add('bg-white', 'text-slate-600');
+          });
+          btn.classList.add('bg-slate-900', 'text-white');
+          btn.classList.remove('bg-white', 'text-slate-600');
+          currentShopCategory = btn.getAttribute('data-cat');
+          renderShops();
+        });
+      });
+    }
+
+    function renderAll() {
+      renderDayTabs();
+      renderDayHeader();
+      renderTimeline();
+      renderShops();
+    }
+
+    // Startup
+    window.addEventListener('DOMContentLoaded', () => {
+      initData();
+      renderAll();
+      setupEventListeners();
+    });
+  </script>
+</body>
+</html>
