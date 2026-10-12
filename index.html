@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>大阪・神戶 5天4夜 隨行規劃助手</title>
+  <title>大阪・神戶 5天4夜 隨行規劃助手 (Vue3 + Cloud Sync)</title>
 
   <!-- PWA & iOS Safari Full-Screen App Meta Tags -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,6 +20,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Vue 3 CDN (Global Build) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
 
   <script>
     tailwind.config = {
@@ -34,568 +36,697 @@
     }
   </script>
 
-    <!-- 獨立外部 CSS 樣式檔 -->
+  <!-- 獨立外置樣式表 -->
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="antialiased min-h-screen flex flex-col font-sans pb-16 lg:pb-10 transition-colors duration-200">
 
-  <header class="sticky top-0 z-30 theme-card-bg/95 backdrop-blur-md border-b theme-card-border pt-0 sm:pt-safe transition-colors duration-200 shadow-xs">
-    <div class="w-full px-2.5 sm:px-4 py-1 flex items-center justify-between gap-1.5">
-      <div class="flex items-center gap-2 min-w-0 flex-1">
-        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg theme-primary-bg flex items-center justify-center text-white shadow-xs flex-shrink-0">
-          <i class="fa-solid fa-map-location-dot text-xs sm:text-sm"></i>
-        </div>
-        <div class="min-w-0">
-          <div class="flex items-center gap-1.5">
-            <h1 class="text-xs sm:text-sm font-extrabold tracking-tight truncate leading-tight">大阪・關西 隨行助手</h1>
-            <span id="saveStatusBadge" class="hidden sm:inline-flex text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 items-center gap-1 flex-shrink-0">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              本機與網址已同步
-            </span>
+  <div id="app" class="flex flex-col min-h-screen">
+    <!-- Top Header Bar -->
+    <header class="sticky top-0 z-30 theme-card-bg/95 backdrop-blur-md border-b theme-card-border pt-0 sm:pt-safe transition-colors duration-200 shadow-xs">
+      <div class="w-full px-2.5 sm:px-4 py-1 flex items-center justify-between gap-1.5">
+        <div class="flex items-center gap-2 min-w-0 flex-1">
+          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg theme-primary-bg flex items-center justify-center text-white shadow-xs flex-shrink-0">
+            <i class="fa-solid fa-map-location-dot text-xs sm:text-sm"></i>
           </div>
-          <p class="text-[9.5px] sm:text-[10px] text-slate-500 dark:text-slate-400 truncate leading-tight">
-            🏨 基準住宿：香榭麗大國 2 (大國町站步行4分)
-          </p>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-1 flex-shrink-0">
-        <!-- Share Latest Link Button -->
-        <button id="shareLinkBtn" class="px-2 py-1 rounded-lg text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center gap-1 active:scale-95 transition" title="複製最新行程網址">
-          <i class="fa-solid fa-share-nodes text-[9px]"></i>
-          <span class="hidden xs:inline">分享網址</span>
-        </button>
-
-        <button id="themeToggleBtn" class="px-2 py-1 rounded-lg text-[10px] font-bold theme-primary-light-bg theme-primary-text border theme-primary-border flex items-center gap-1 active:scale-95 transition" title="切換配色">
-          <i class="fa-solid fa-palette text-[9px]"></i>
-          <span class="hidden xs:inline">配色</span>
-        </button>
-
-        <button id="viewToggleShopsBtn" class="lg:hidden px-2 py-1 rounded-lg text-[10px] font-bold bg-orange-500/10 text-orange-600 border border-orange-500/20 flex items-center gap-1 active:scale-95 transition">
-          <i class="fa-solid fa-store text-[9px]"></i>
-          <span>周邊</span>
-        </button>
-
-        <button id="dataSettingsBtn" class="p-1 sm:p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition" title="備份管理">
-          <i class="fa-solid fa-gear text-xs sm:text-sm"></i>
-        </button>
-      </div>
-    </div>
-
-    <div id="themePaletteBar" class="hidden border-t theme-card-border px-2.5 py-1 bg-slate-50/90 dark:bg-slate-900/90 transition-all">
-      <div class="w-full flex items-center justify-between gap-1 overflow-x-auto no-scrollbar">
-        <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1 flex-shrink-0">風格：</span>
-        <div class="flex items-center gap-1 flex-shrink-0" id="themeButtonsList">
-          <button data-theme-val="ocean" class="theme-select-btn px-2 py-0.5 rounded text-[10px] font-bold border flex items-center gap-1 bg-white text-sky-700 border-sky-300">
-            <span class="w-2 h-2 rounded-full bg-sky-600"></span> 晴空藍
-          </button>
-          <button data-theme-val="matcha" class="theme-select-btn px-2 py-0.5 rounded text-[10px] font-bold border flex items-center gap-1 bg-white text-emerald-700 border-emerald-300">
-            <span class="w-2 h-2 rounded-full bg-emerald-600"></span> 抹茶
-          </button>
-          <button data-theme-val="sakura" class="theme-select-btn px-2 py-0.5 rounded text-[10px] font-bold border flex items-center gap-1 bg-white text-pink-700 border-pink-300">
-            <span class="w-2 h-2 rounded-full bg-pink-600"></span> 緋櫻
-          </button>
-          <button data-theme-val="sunset" class="theme-select-btn px-2 py-0.5 rounded text-[10px] font-bold border flex items-center gap-1 bg-white text-orange-700 border-orange-300">
-            <span class="w-2 h-2 rounded-full bg-orange-600"></span> 日暮
-          </button>
-          <button data-theme-val="violet" class="theme-select-btn px-2 py-0.5 rounded text-[10px] font-bold border flex items-center gap-1 bg-white text-purple-700 border-purple-300">
-            <span class="w-2 h-2 rounded-full bg-purple-600"></span> 紫羅蘭
-          </button>
-          <button data-theme-val="dark" class="theme-select-btn px-2 py-0.5 rounded text-[10px] font-bold border flex items-center gap-1 bg-slate-800 text-sky-300 border-slate-700">
-            <span class="w-2 h-2 rounded-full bg-sky-400"></span> 暗黑
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 5-Day Horizontal Switcher Bar -->
-    <div class="border-t theme-card-border px-2 py-1 bg-white/40 dark:bg-slate-900/40">
-      <div class="w-full flex items-center overflow-x-auto no-scrollbar gap-1" id="dayTabsList">
-      </div>
-    </div>
-  </header>
-
-  <main class="flex-1 w-full max-w-6xl mx-auto px-1.5 sm:px-4 py-2 sm:py-3">
-    
-    <!-- Day Overview Banner -->
-    <div class="theme-card-bg rounded-xl p-2.5 sm:p-3.5 border theme-card-border shadow-xs mb-2 transition-colors">
-      <div class="flex items-center justify-between gap-1.5 flex-wrap">
-        <div class="min-w-0 flex-1">
-          <div class="flex items-center gap-1.5 flex-wrap">
-            <span id="currentDayBadge" class="px-1.5 py-0.2 rounded text-[10px] font-black theme-primary-light-bg theme-primary-text">Day 1</span>
-            <span id="currentDayTheme" class="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">南大阪歷史・極上熟成和牛</span>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5">
+              <h1 class="text-xs sm:text-sm font-extrabold tracking-tight truncate leading-tight">大阪・關西 隨行助手</h1>
+              <!-- Cloud Sync Badge -->
+              <span class="inline-flex text-[9px] font-bold px-1.5 py-0.2 rounded-full border items-center gap-1 flex-shrink-0 transition-all"
+                    :class="syncBadgeClass">
+                <span class="w-1.5 h-1.5 rounded-full" :class="syncDotClass"></span>
+                <span>{{ syncStatusText }}</span>
+              </span>
+            </div>
+            <p class="text-[9.5px] sm:text-[10px] text-slate-500 dark:text-slate-400 truncate leading-tight">
+              🏨 基準住宿：香榭麗大國 2 (大國町站步行4分)
+            </p>
           </div>
-          <h2 id="currentDayTitle" class="text-xs sm:text-base font-black mt-0.5 truncate leading-tight">抵達大阪 ＆ 悠閒住吉大社巡禮</h2>
         </div>
 
-        <div class="flex items-center gap-1 flex-shrink-0 flex-wrap">
-          <!-- Recalculate Time Forward -->
-          <button id="recalcTimesBtn" class="px-2.5 py-1 text-[10.5px] font-bold rounded-lg text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 flex items-center gap-1 active:scale-95 transition" title="重新鏈結推算時間">
-            <i class="fa-solid fa-clock-rotate-left text-[10px]"></i>
-            <span>順推時間</span>
+        <div class="flex items-center gap-1 flex-shrink-0">
+          <button @click="forcePullCloud" class="px-2 py-1 rounded-lg text-[10px] font-bold bg-sky-500/10 text-sky-600 border border-sky-500/20 flex items-center gap-1 active:scale-95 transition" title="重新檢查雲端">
+            <i class="fa-solid fa-arrows-rotate text-[9px]" :class="{ 'animate-spin': isSyncing }"></i>
+            <span class="hidden xs:inline">即時同步</span>
           </button>
 
-          <!-- Add Spot Quick Header Button -->
-          <button id="addStopHeaderBtn" class="px-2.5 py-1 text-[10.5px] font-black rounded-lg text-white theme-primary-bg theme-primary-hover flex items-center gap-1 shadow-xs active:scale-95 transition">
-            <i class="fa-solid fa-plus text-[10px]"></i>
-            <span>加景點</span>
+          <button @click="showThemeBar = !showThemeBar" class="px-2 py-1 rounded-lg text-[10px] font-bold theme-primary-light-bg theme-primary-text border theme-primary-border flex items-center gap-1 active:scale-95 transition" title="切換配色">
+            <i class="fa-solid fa-palette text-[9px]"></i>
+            <span class="hidden xs:inline">配色</span>
+          </button>
+
+          <button @click="showShopDrawer = true" class="lg:hidden px-2 py-1 rounded-lg text-[10px] font-bold bg-orange-500/10 text-orange-600 border border-orange-500/20 flex items-center gap-1 active:scale-95 transition">
+            <i class="fa-solid fa-store text-[9px]"></i>
+            <span>周邊</span>
+          </button>
+
+          <button @click="showDataModal = true" class="p-1 sm:p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition" title="備份管理">
+            <i class="fa-solid fa-gear text-xs sm:text-sm"></i>
           </button>
         </div>
       </div>
-      
-      <p id="currentDayDesc" class="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed border-t theme-card-border pt-1">
-        入住大國町民宿，漫步千年神社朱紅反橋，晚餐享用極上熟成和牛／燒肉。
-      </p>
-    </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-4 items-start">
-      
-      <!-- Left: Timeline Section -->
-      <section class="lg:col-span-7 space-y-2 w-full" id="timelineSection">
-        <div class="flex items-center justify-between px-1">
-          <div class="flex items-center gap-1 text-[11px] font-bold">
-            <i class="fa-solid fa-diamond-turn-right theme-primary-text text-[10px]"></i>
-            <span>路線行程節點</span>
-            <span id="stopsCountBadge" class="px-1.5 py-0.2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-[9px] font-mono">0</span>
+      <!-- Theme Palette Selector Bar -->
+      <div v-show="showThemeBar" class="border-t theme-card-border px-2.5 py-1 bg-slate-50/90 dark:bg-slate-900/90 transition-all">
+        <div class="w-full flex items-center justify-between gap-1 overflow-x-auto no-scrollbar">
+          <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1 flex-shrink-0">風格：</span>
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <button v-for="t in themes" :key="t.val" @click="changeTheme(t.val)"
+                    class="theme-select-btn px-2 py-0.5 rounded text-[10px] font-bold border flex items-center gap-1"
+                    :class="[t.btnClass, currentTheme === t.val ? 'ring-2 ring-offset-1 ring-slate-900 dark:ring-white' : '']">
+              <span class="w-2 h-2 rounded-full" :class="t.dotClass"></span> {{ t.name }}
+            </button>
           </div>
-          <span class="text-[9.5px] text-slate-400">點擊里程/起點按鈕直接開啟 Google Maps</span>
         </div>
+      </div>
 
-        <div id="timelineContainer" class="space-y-1.5 sm:space-y-2 w-full">
+      <!-- 5-Day Horizontal Switcher Bar -->
+      <div class="border-t theme-card-border px-2 py-1 bg-white/40 dark:bg-slate-900/40">
+        <div class="w-full flex items-center overflow-x-auto no-scrollbar gap-1">
+          <button v-for="(day, index) in appData" :key="day.day" @click="currentDayIndex = index; selectedStopId = null"
+                  class="flex-shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition flex items-center gap-1"
+                  :class="currentDayIndex === index ? 'theme-primary-bg text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'">
+            <span>Day {{ day.day }}</span>
+            <span class="text-[9px] opacity-80 font-normal hidden sm:inline">・{{ day.theme.split('・')[0] }}</span>
+          </button>
         </div>
-      </section>
+      </div>
+    </header>
 
-      <!-- Right: Street Shops -->
-      <section id="shopsDrawerContainer" class="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs lg:static lg:bg-transparent lg:backdrop-blur-none lg:z-auto lg:col-span-5 hidden lg:block transition-opacity">
-        <div class="fixed bottom-0 left-0 right-0 max-h-[82vh] h-full lg:max-h-none lg:h-auto lg:static theme-card-bg rounded-t-2xl lg:rounded-xl border-t lg:border theme-card-border shadow-xl lg:shadow-xs flex flex-col overflow-hidden pb-safe transition-colors">
-          
-          <div class="p-2.5 sm:p-3 border-b theme-card-border flex items-center justify-between flex-shrink-0">
-            <div class="flex items-center gap-1.5 min-w-0">
-              <div class="w-6 h-6 rounded-lg bg-orange-500/10 text-orange-600 flex items-center justify-center flex-shrink-0">
-                <i class="fa-solid fa-store text-xs"></i>
+    <!-- Main Content Area -->
+    <main class="flex-1 w-full max-w-6xl mx-auto px-1.5 sm:px-4 py-2 sm:py-3">
+      <!-- Day Overview Banner -->
+      <div class="theme-card-bg rounded-xl p-2.5 sm:p-3.5 border theme-card-border shadow-xs mb-2 transition-colors">
+        <div class="flex items-center justify-between gap-1.5 flex-wrap">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="px-1.5 py-0.2 rounded text-[10px] font-black theme-primary-light-bg theme-primary-text">Day {{ currentDay?.day }}</span>
+              <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">{{ currentDay?.theme }}</span>
+            </div>
+            <h2 class="text-xs sm:text-base font-black mt-0.5 truncate leading-tight">{{ currentDay?.title }}</h2>
+          </div>
+
+          <div class="flex items-center gap-1 flex-shrink-0 flex-wrap">
+            <button @click="recalculateSchedule" class="px-2.5 py-1 text-[10.5px] font-bold rounded-lg text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 flex items-center gap-1 active:scale-95 transition" title="重新鏈結推算時間">
+              <i class="fa-solid fa-clock-rotate-left text-[10px]"></i>
+              <span>順推時間</span>
+            </button>
+            <button @click="openAddStopModal" class="px-2.5 py-1 text-[10.5px] font-black rounded-lg text-white theme-primary-bg theme-primary-hover flex items-center gap-1 shadow-xs active:scale-95 transition">
+              <i class="fa-solid fa-plus text-[10px]"></i>
+              <span>加景點</span>
+            </button>
+          </div>
+        </div>
+        
+        <p class="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed border-t theme-card-border pt-1">
+          {{ currentDay?.desc }}
+        </p>
+      </div>
+
+      <!-- Main Columns Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-4 items-start">
+        
+        <!-- Left: Timeline Section -->
+        <section class="lg:col-span-7 space-y-2 w-full">
+          <div class="flex items-center justify-between px-1">
+            <div class="flex items-center gap-1 text-[11px] font-bold">
+              <i class="fa-solid fa-diamond-turn-right theme-primary-text text-[10px]"></i>
+              <span>路線行程節點</span>
+              <span class="px-1.5 py-0.2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-[9px] font-mono">
+                {{ currentDay?.stops?.length || 0 }}
+              </span>
+            </div>
+            <span class="text-[9.5px] text-slate-400">點擊里程/起點/地址可直接開啟 Google Maps</span>
+          </div>
+
+          <div v-if="!currentDay?.stops || currentDay?.stops.length === 0" class="theme-card-bg rounded-xl p-6 text-center text-slate-400 space-y-1.5 border border-dashed theme-card-border">
+            <i class="fa-solid fa-map-location-dot text-2xl"></i>
+            <p class="text-xs">今天還沒有任何行程景點，點擊上方「加景點」開始規劃！</p>
+          </div>
+
+          <div v-else class="space-y-1.5 sm:space-y-2 w-full">
+            <div v-for="(stop, idx) in currentDay.stops" :key="stop.id"
+                 @click="selectedStopId = selectedStopId === stop.id ? null : stop.id"
+                 class="w-full transition group cursor-pointer">
+              <div class="theme-card-bg rounded-xl p-2.5 sm:p-3 border transition-all"
+                   :class="selectedStopId === stop.id ? 'theme-primary-border shadow-xs ring-1 ring-sky-500/20' : 'theme-card-border hover:shadow-xs'">
+                
+                <!-- Stop Top Metadata Row -->
+                <div class="flex items-center justify-between gap-1 pb-1.5 border-b theme-card-border">
+                  <div class="flex items-center gap-1.5 flex-wrap min-w-0">
+                    <span class="w-5 h-5 rounded-md flex items-center justify-center text-[10px] flex-shrink-0"
+                          :class="selectedStopId === stop.id ? 'theme-primary-bg text-white' : 'theme-primary-light-bg theme-primary-text'">
+                      <i class="fa-solid" :class="stop.icon || 'fa-location-dot'"></i>
+                    </span>
+                    <span class="text-[11px] font-black font-mono tracking-tight bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded">
+                      {{ stop.depTime }} → {{ stop.arrTime }}
+                    </span>
+                    <span v-if="stop.stayMins > 0" class="text-[9px] font-bold text-slate-400">停{{ stop.stayMins }}分</span>
+                    
+                    <button v-if="idx > 0 && getDistance(idx) > 0" type="button" @click.stop="openGoogleMap(stop)"
+                            class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 flex items-center gap-0.5 transition active:scale-95" title="在 Google Maps 開啟">
+                      <i class="fa-solid fa-location-arrow text-[8px]"></i>
+                      <span>距起點 {{ getDistance(idx) }}km</span>
+                      <i class="fa-solid fa-arrow-up-right-from-square text-[7px] ml-0.5 opacity-70"></i>
+                    </button>
+                    <button v-else-if="idx === 0" type="button" @click.stop="openGoogleMap(stop)"
+                            class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 hover:bg-emerald-500/20 flex items-center gap-0.5 transition active:scale-95" title="在 Google Maps 查看起點">
+                      <i class="fa-solid fa-house-flag text-[8px]"></i>
+                      <span>起點站</span>
+                      <i class="fa-solid fa-arrow-up-right-from-square text-[7px] ml-0.5 opacity-70"></i>
+                    </button>
+
+                    <span class="text-[9px] font-black px-1.5 py-0.2 rounded border" :class="getCategoryBadgeClass(stop.category)">
+                      {{ (stop.category || 'SIGHT').toUpperCase() }}
+                    </span>
+                  </div>
+
+                  <div class="flex items-center gap-0.5 flex-shrink-0" @click.stop>
+                    <button @click="moveStop(idx, -1)" :disabled="idx === 0" class="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20 active:scale-95 transition" title="上移">
+                      <i class="fa-solid fa-chevron-up text-[10px]"></i>
+                    </button>
+                    <button @click="moveStop(idx, 1)" :disabled="idx === currentDay.stops.length - 1" class="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20 active:scale-95 transition" title="下移">
+                      <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                    </button>
+                    <button @click="openEditStopModal(stop)" class="p-1 theme-primary-text hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition active:scale-95" title="編輯">
+                      <i class="fa-solid fa-pen text-[10px]"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="mt-1.5 space-y-1.5">
+                  <div class="flex items-center justify-between gap-1.5">
+                    <h4 class="text-xs sm:text-sm font-black leading-snug group-hover:theme-primary-text transition truncate flex-1">
+                      {{ stop.name }}
+                    </h4>
+                    <button @click.stop="selectedStopId = stop.id; showShopDrawer = true" class="text-[10px] font-bold text-orange-600 hover:text-orange-700 flex-shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded bg-orange-500/10 border border-orange-500/20 active:scale-95 transition">
+                      <i class="fa-solid fa-store text-[9px]"></i>
+                      <span>街邊店 ({{ stop.shops ? stop.shops.length : 0 }})</span>
+                    </button>
+                  </div>
+
+                  <div v-if="stop.address" @click.stop="openGoogleMap(stop)" class="text-[9.5px] text-slate-500 dark:text-slate-400 flex items-center gap-1 truncate hover:text-sky-600 dark:hover:text-sky-400 hover:underline cursor-pointer group/addr">
+                    <i class="fa-solid fa-map-pin text-[8.5px] text-rose-500 flex-shrink-0"></i>
+                    <span class="truncate font-medium">{{ stop.address }}</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[7.5px] opacity-60 flex-shrink-0 ml-0.5"></i>
+                  </div>
+
+                  <div v-if="stop.travelMode" class="bg-slate-50 dark:bg-slate-900/50 rounded-lg px-2 py-1 text-[10px] text-slate-600 dark:text-slate-400 border theme-card-border flex items-start sm:items-center gap-1.5 flex-wrap">
+                    <i class="fa-solid fa-route text-slate-400 text-[9px] flex-shrink-0 mt-0.5 sm:mt-0"></i>
+                    <span class="font-black text-slate-800 dark:text-slate-200">{{ stop.travelMode }}</span>
+                    <span v-if="stop.travelMins" class="text-slate-400">約{{ stop.travelMins }}分</span>
+                    <span v-if="stop.travelDetail" class="text-slate-500 dark:text-slate-400 break-words whitespace-normal leading-relaxed w-full sm:w-auto">・{{ stop.travelDetail }}</span>
+                  </div>
+
+                  <p v-if="stop.note" class="text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/20">
+                    <span class="font-black text-amber-600">💡 攻略：</span>{{ stop.note }}
+                  </p>
+                </div>
+
               </div>
-              <div class="min-w-0">
-                <h3 class="text-xs font-bold leading-tight truncate">周邊街邊私房店</h3>
-                <p id="shopTargetStopName" class="text-[10px] text-orange-600 font-medium truncate max-w-[180px]">全部當日景點</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right: Street Shops -->
+        <section :class="[showShopDrawer ? 'fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs flex items-end lg:static lg:bg-transparent lg:backdrop-blur-none lg:z-auto lg:col-span-5' : 'hidden lg:block lg:col-span-5']">
+          <div class="w-full max-h-[82vh] h-full lg:max-h-none lg:h-auto theme-card-bg rounded-t-2xl lg:rounded-xl border-t lg:border theme-card-border shadow-xl lg:shadow-xs flex flex-col overflow-hidden pb-safe transition-colors">
+            
+            <div class="p-2.5 sm:p-3 border-b theme-card-border flex items-center justify-between flex-shrink-0">
+              <div class="flex items-center gap-1.5 min-w-0">
+                <div class="w-6 h-6 rounded-lg bg-orange-500/10 text-orange-600 flex items-center justify-center flex-shrink-0">
+                  <i class="fa-solid fa-store text-xs"></i>
+                </div>
+                <div class="min-w-0">
+                  <h3 class="text-xs font-bold leading-tight truncate">周邊街邊私房店</h3>
+                  <p class="text-[10px] text-orange-600 font-medium truncate max-w-[180px]">
+                    {{ selectedStop ? `📍 ${selectedStop.name.split(' (')[0]}` : `📍 全部當日景點 (${allCurrentDayShops.length} 家)` }}
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <button @click="openAddShopModal" class="px-2 py-1 text-[11px] font-bold bg-orange-600 hover:bg-orange-700 text-white rounded-lg shadow-xs flex items-center gap-1 active:scale-95 transition">
+                  <i class="fa-solid fa-plus text-[9px]"></i>
+                  <span>加名店</span>
+                </button>
+                <button @click="showShopDrawer = false" class="lg:hidden p-1 text-slate-400 hover:text-slate-600 rounded-md">
+                  <i class="fa-solid fa-xmark text-base"></i>
+                </button>
               </div>
             </div>
 
-            <div class="flex items-center gap-1 flex-shrink-0">
-              <button id="addShopQuickBtn" class="px-2 py-1 text-[11px] font-bold bg-orange-600 hover:bg-orange-700 text-white rounded-lg shadow-xs flex items-center gap-1 active:scale-95 transition">
-                <i class="fa-solid fa-plus text-[9px]"></i>
-                <span>加名店</span>
-              </button>
-              <button id="closeDrawerBtn" class="lg:hidden p-1 text-slate-400 hover:text-slate-600 rounded-md">
-                <i class="fa-solid fa-xmark text-base"></i>
+            <!-- Category Filter Bar -->
+            <div class="px-2 py-1 border-b theme-card-border flex gap-1 overflow-x-auto no-scrollbar bg-slate-50/70 dark:bg-slate-900/50 flex-shrink-0 select-none">
+              <button v-for="cat in shopCategories" :key="cat.val" @click="currentShopCat = cat.val"
+                      class="shop-filter-btn px-2 py-0.5 rounded text-[10px] font-bold flex-shrink-0 transition"
+                      :class="currentShopCat === cat.val ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'theme-card-bg text-slate-600 dark:text-slate-300 border theme-card-border hover:bg-slate-100'">
+                {{ cat.name }}
               </button>
             </div>
+
+            <!-- Shops List Scroll Area -->
+            <div class="p-2 space-y-1.5 overflow-y-auto max-h-[500px] divide-y divide-slate-100 dark:divide-slate-800/80 flex-1">
+              <div v-if="filteredShops.length === 0" class="py-8 text-center text-slate-400 space-y-1.5">
+                <i class="fa-solid fa-store text-2xl"></i>
+                <p class="text-xs">目前沒有符合條件的街邊店推薦</p>
+              </div>
+
+              <div v-for="shop in filteredShops" :key="shop.id" class="pt-2 pb-2 group hover:bg-slate-50/80 dark:hover:bg-slate-800/50 rounded-lg px-1.5 transition">
+                <div class="flex items-start justify-between gap-1.5">
+                  <div class="space-y-0.5 flex-1 min-w-0">
+                    <div class="flex items-center gap-1 flex-wrap">
+                      <span class="w-4 h-4 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[9px] text-slate-500">
+                        <i class="fa-solid" :class="shop.icon || 'fa-utensils'"></i>
+                      </span>
+                      <span class="text-[9px] font-bold px-1 py-0.2 rounded border" :class="getShopCatBadgeClass(shop.cat)">
+                        {{ getShopCatName(shop.cat) }}
+                      </span>
+                      <span class="text-[9px] font-bold text-slate-400">{{ shop.price || '$' }}</span>
+                      <span class="text-[9px] text-slate-400 truncate max-w-[120px]">@ {{ shop.parentStopName?.split(' (')[0] }}</span>
+                    </div>
+                    <h5 class="text-xs font-black group-hover:text-orange-600 transition truncate">{{ shop.name }}</h5>
+                    <div v-if="shop.address" @click="openGoogleMap(shop)" class="text-[9px] text-slate-400 truncate hover:text-sky-600 dark:hover:text-sky-400 hover:underline cursor-pointer flex items-center gap-0.5">
+                      <i class="fa-solid fa-map-pin text-[8px] text-rose-500 flex-shrink-0"></i>
+                      <span class="truncate">{{ shop.address }}</span>
+                    </div>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-snug line-clamp-2">{{ shop.desc || '無特別備註' }}</p>
+                  </div>
+
+                  <div class="flex items-center gap-0.5 flex-shrink-0 pt-0.5">
+                    <button @click="openGoogleMap(shop)" class="p-1 theme-primary-text hover:opacity-80 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition active:scale-95" title="地圖導航">
+                      <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-2 border-t theme-card-border bg-slate-50 dark:bg-slate-900/50 text-center flex-shrink-0">
+              <a href="https://maps.google.com" target="_blank" class="inline-flex items-center gap-1 text-[11px] theme-primary-text font-bold">
+                <span>在 Google Maps 探索周邊全景</span>
+                <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+              </a>
+            </div>
+
           </div>
+        </section>
 
-          <!-- Category Filter Bar -->
-          <div class="px-2 py-1 border-b theme-card-border flex gap-1 overflow-x-auto no-scrollbar bg-slate-50/70 dark:bg-slate-900/50 flex-shrink-0 select-none" id="shopCategoryFilterBar">
-            <button data-cat="all" class="shop-filter-btn px-2 py-0.5 rounded text-[10px] font-bold bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 flex-shrink-0 select-none cursor-pointer">全部</button>
-            <button data-cat="food" class="shop-filter-btn px-2 py-0.5 rounded text-[10px] font-semibold theme-card-bg text-slate-600 dark:text-slate-300 border theme-card-border hover:bg-slate-100 flex-shrink-0 select-none cursor-pointer">小吃・美食</button>
-            <button data-cat="cafe" class="shop-filter-btn px-2 py-0.5 rounded text-[10px] font-semibold theme-card-bg text-slate-600 dark:text-slate-300 border theme-card-border hover:bg-slate-100 flex-shrink-0 select-none cursor-pointer">咖啡・甜點</button>
-            <button data-cat="night" class="shop-filter-btn px-2 py-0.5 rounded text-[10px] font-semibold theme-card-bg text-slate-600 dark:text-slate-300 border theme-card-border hover:bg-slate-100 flex-shrink-0 select-none cursor-pointer">居酒・宵夜</button>
-            <button data-cat="goods" class="shop-filter-btn px-2 py-0.5 rounded text-[10px] font-semibold theme-card-bg text-slate-600 dark:text-slate-300 border theme-card-border hover:bg-slate-100 flex-shrink-0 select-none cursor-pointer">伴手禮</button>
-          </div>
+      </div>
+    </main>
 
-          <!-- Shops List Scroll Area -->
-          <div id="shopsListContainer" class="p-2 space-y-1.5 overflow-y-auto max-h-[500px] divide-y divide-slate-100 dark:divide-slate-800/80 flex-1">
-          </div>
-
-          <div class="p-2 border-t theme-card-border bg-slate-50 dark:bg-slate-900/50 text-center flex-shrink-0">
-            <a id="searchTargetGoogleMapBtn" href="https://maps.google.com" target="_blank" class="inline-flex items-center gap-1 text-[11px] theme-primary-text font-bold">
-              <span>在 Google Maps 探索周邊全景</span>
-              <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
-            </a>
-          </div>
-
-        </div>
-      </section>
-
-    </div>
-  </main>
-
-  <aside class="fixed bottom-0 left-0 right-0 z-30 theme-card-bg/95 backdrop-blur-md border-t theme-card-border py-1 px-1 lg:hidden pb-safe shadow-lg transition-colors">
-    <div class="w-full max-w-md mx-auto grid grid-cols-4 gap-0.5 text-center">
-      <button id="mobileAddStopBtn" class="flex flex-col items-center justify-center py-1 theme-primary-text font-bold text-[9.5px] rounded active:scale-95 transition">
-        <i class="fa-solid fa-circle-plus text-base mb-0.5"></i>
-        <span>加景點</span>
-      </button>
-      <button id="mobileOpenSplitBtn" class="flex flex-col items-center justify-center py-1 text-emerald-600 font-bold text-[9.5px] rounded active:scale-95 transition">
-        <i class="fa-solid fa-receipt text-base mb-0.5"></i>
-        <span>分帳計算</span>
-      </button>
-      <button id="mobileOpenShopsDrawerBtn" class="flex flex-col items-center justify-center py-1 text-orange-600 font-bold text-[9.5px] rounded active:scale-95 transition">
-        <i class="fa-solid fa-store text-base mb-0.5"></i>
-        <span>看周邊</span>
-      </button>
-      <button id="mobileOpenSettingsBtn" class="flex flex-col items-center justify-center py-1 text-slate-700 dark:text-slate-300 font-bold text-[9.5px] rounded active:scale-95 transition">
-        <i class="fa-solid fa-gear text-base mb-0.5"></i>
-        <span>備份設定</span>
-      </button>
-    </div>
-  </aside>
-
-  <div id="stopModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-end sm:items-center justify-center p-0 sm:p-3">
-    <div class="theme-card-bg w-full sm:max-w-lg rounded-t-2xl sm:rounded-xl max-h-[92vh] flex flex-col border theme-card-border shadow-2xl overflow-hidden pb-safe transition-colors">
-      <div class="px-4 py-3 border-b theme-card-border flex items-center justify-between flex-shrink-0">
-        <div class="flex items-center gap-2">
-          <div class="w-7 h-7 rounded-lg theme-primary-light-bg theme-primary-text flex items-center justify-center text-xs">
-            <i id="stopModalHeaderIcon" class="fa-solid fa-location-dot"></i>
-          </div>
-          <h3 id="stopModalTitle" class="text-xs sm:text-sm font-bold">編輯行程景點</h3>
-        </div>
-        <button id="closeStopModalBtn" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
-          <i class="fa-solid fa-xmark text-base"></i>
+    <!-- Bottom Sticky Mobile Menu Bar -->
+    <aside class="fixed bottom-0 left-0 right-0 z-30 theme-card-bg/95 backdrop-blur-md border-t theme-card-border py-1 px-1 lg:hidden pb-safe shadow-lg transition-colors">
+      <div class="w-full max-w-md mx-auto grid grid-cols-4 gap-0.5 text-center">
+        <button @click="openAddStopModal" class="flex flex-col items-center justify-center py-1 theme-primary-text font-bold text-[9.5px] rounded active:scale-95 transition">
+          <i class="fa-solid fa-circle-plus text-base mb-0.5"></i>
+          <span>加景點</span>
+        </button>
+        <button @click="showSplitModal = true" class="flex flex-col items-center justify-center py-1 text-emerald-600 font-bold text-[9.5px] rounded active:scale-95 transition">
+          <i class="fa-solid fa-receipt text-base mb-0.5"></i>
+          <span>分帳計算</span>
+        </button>
+        <button @click="showShopDrawer = true" class="flex flex-col items-center justify-center py-1 text-orange-600 font-bold text-[9.5px] rounded active:scale-95 transition">
+          <i class="fa-solid fa-store text-base mb-0.5"></i>
+          <span>看周邊</span>
+        </button>
+        <button @click="showDataModal = true" class="flex flex-col items-center justify-center py-1 text-slate-700 dark:text-slate-300 font-bold text-[9.5px] rounded active:scale-95 transition">
+          <i class="fa-solid fa-gear text-base mb-0.5"></i>
+          <span>備份設定</span>
         </button>
       </div>
+    </aside>
 
-      <form id="stopForm" class="p-3.5 space-y-3 overflow-y-auto flex-1 text-xs">
-        <input type="hidden" id="formStopId">
-
-        <div class="relative">
-          <div class="flex items-center justify-between mb-1">
-            <label class="block font-bold">景點 / 站點名稱 *</label>
-            <span class="text-[9.5px] text-indigo-600 dark:text-indigo-400 font-semibold cursor-pointer" id="quickPresetFillBtn">
-              <i class="fa-solid fa-wand-magic-sparkles mr-0.5"></i>快速套用熱門景點
-            </span>
+    <!-- Stop Modal -->
+    <div v-show="showStopModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-3">
+      <div class="theme-card-bg w-full sm:max-w-lg rounded-t-2xl sm:rounded-xl max-h-[92vh] flex flex-col border theme-card-border shadow-2xl overflow-hidden pb-safe transition-colors">
+        <div class="px-4 py-3 border-b theme-card-border flex items-center justify-between flex-shrink-0">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg theme-primary-light-bg theme-primary-text flex items-center justify-center text-xs">
+              <i class="fa-solid" :class="stopForm.icon || 'fa-location-dot'"></i>
+            </div>
+            <h3 class="text-xs sm:text-sm font-bold">{{ stopForm.id ? '編輯行程景點' : `Day ${currentDay?.day} - 新增行程景點` }}</h3>
           </div>
+          <button @click="showStopModal = false" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
+            <i class="fa-solid fa-xmark text-base"></i>
+          </button>
+        </div>
+
+        <form @submit.prevent="saveStopForm" class="p-3.5 space-y-3 overflow-y-auto flex-1 text-xs">
           <div class="relative">
-            <input type="text" id="formStopName" required placeholder="例如：國寶姬路城、難波八阪神社、通天閣" autocomplete="off" class="w-full px-2.5 py-1.5 border theme-card-border rounded-lg bg-transparent font-semibold">
-            <span id="searchLoadingSpinner" class="hidden absolute right-2.5 top-2 text-slate-400 animate-spin text-xs">
-              <i class="fa-solid fa-circle-notch"></i>
-            </span>
-          </div>
-          <div id="autocompleteDropdown" class="absolute left-0 right-0 top-full mt-1 theme-card-bg border theme-card-border rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto hidden">
-          </div>
-        </div>
-
-        <div>
-          <label class="block font-bold mb-1 flex items-center justify-between">
-            <span>詳細地址 (用於精準連結 Google Maps)</span>
-            <span class="text-[9px] text-slate-400 font-normal">日本實體地址</span>
-          </label>
-          <input type="text" id="formStopAddress" placeholder="例如：大阪府大阪市住吉區住吉2丁目9-89" class="w-full px-2.5 py-1.5 border theme-card-border rounded-lg bg-transparent font-medium">
-        </div>
-
-        <div class="p-2.5 bg-indigo-50/60 dark:bg-indigo-950/30 rounded-lg border border-indigo-200 dark:border-indigo-900/50 space-y-1.5">
-          <div class="flex items-center justify-between">
-            <label class="block font-bold text-[10.5px] text-indigo-900 dark:text-indigo-300">
-              <i class="fa-solid fa-crosshairs mr-1"></i>地理座標 (用於里程計算)
-            </label>
-            <span class="text-[9px] text-indigo-500">選填 / 自動補全</span>
-          </div>
-          <div class="grid grid-cols-2 gap-1.5">
-            <div>
-              <span class="text-[9px] text-slate-500">緯度 (Lat)</span>
-              <input type="number" step="any" id="formStopLat" placeholder="如：34.6548" class="w-full px-2 py-1 border theme-card-border rounded text-xs bg-white dark:bg-slate-800 font-mono">
+            <div class="flex items-center justify-between mb-1">
+              <label class="block font-bold">景點 / 站點名稱 *</label>
+              <span @click="quickPresetPick" class="text-[9.5px] text-indigo-600 dark:text-indigo-400 font-semibold cursor-pointer">
+                <i class="fa-solid fa-wand-magic-sparkles mr-0.5"></i>快速套用熱門景點
+              </span>
             </div>
-            <div>
-              <span class="text-[9px] text-slate-500">經度 (Lng)</span>
-              <input type="number" step="any" id="formStopLng" placeholder="如：135.4983" class="w-full px-2 py-1 border theme-card-border rounded text-xs bg-white dark:bg-slate-800 font-mono">
-            </div>
+            <input type="text" v-model="stopForm.name" required placeholder="例如：國寶姬路城、難波八阪神社、通天閣" class="w-full px-2.5 py-1.5 border theme-card-border rounded-lg bg-transparent font-semibold">
           </div>
-        </div>
 
-        <div>
-          <label class="block font-bold mb-1 flex items-center justify-between">
-            <span>代表 Icon 圖示</span>
-            <span class="text-[9px] text-slate-400 font-normal">點選即可套用</span>
-          </label>
-          <div class="grid grid-cols-7 sm:grid-cols-9 gap-1 p-1 bg-slate-50 dark:bg-slate-900/60 rounded-lg border theme-card-border max-h-20 overflow-y-auto no-scrollbar" id="stopIconGrid">
-          </div>
-          <input type="hidden" id="formStopIcon" value="fa-location-dot">
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block font-bold mb-1">分類屬性</label>
-            <select id="formStopCategory" class="w-full px-2 py-1.5 border theme-card-border rounded-lg bg-transparent font-semibold text-xs">
-              <option value="sight">🏛️ 觀光・古蹟</option>
-              <option value="food">🍱 美食・燒肉</option>
-              <option value="transit">🚆 交通・鐵路</option>
-              <option value="lodging">🏨 住宿・放行李</option>
+            <label class="block font-bold mb-1 flex items-center justify-between">
+              <span>詳細地址 (用於精準連結 Google Maps)</span>
+              <span class="text-[9px] text-slate-400 font-normal">日本實體地址</span>
+            </label>
+            <input type="text" v-model="stopForm.address" placeholder="例如：大阪府大阪市住吉區住吉2丁目9-89" class="w-full px-2.5 py-1.5 border theme-card-border rounded-lg bg-transparent font-medium">
+          </div>
+
+          <div class="p-2.5 bg-indigo-50/60 dark:bg-indigo-950/30 rounded-lg border border-indigo-200 dark:border-indigo-900/50 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="block font-bold text-[10.5px] text-indigo-900 dark:text-indigo-300">
+                <i class="fa-solid fa-crosshairs mr-1"></i>地理座標 (用於里程計算)
+              </label>
+              <span class="text-[9px] text-indigo-500">選填 / 自動換算</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5">
+              <div>
+                <span class="text-[9px] text-slate-500">緯度 (Lat)</span>
+                <input type="number" step="any" v-model.number="stopForm.lat" placeholder="如：34.6548" class="w-full px-2 py-1 border theme-card-border rounded text-xs bg-white dark:bg-slate-800 font-mono">
+              </div>
+              <div>
+                <span class="text-[9px] text-slate-500">經度 (Lng)</span>
+                <input type="number" step="any" v-model.number="stopForm.lng" placeholder="如：135.4983" class="w-full px-2 py-1 border theme-card-border rounded text-xs bg-white dark:bg-slate-800 font-mono">
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-bold mb-1 flex items-center justify-between">
+              <span>代表 Icon 圖示</span>
+              <span class="text-[9px] text-slate-400 font-normal">點選即可套用</span>
+            </label>
+            <div class="grid grid-cols-7 sm:grid-cols-9 gap-1 p-1 bg-slate-50 dark:bg-slate-900/60 rounded-lg border theme-card-border max-h-20 overflow-y-auto no-scrollbar">
+              <button v-for="ic in availableIcons" :key="ic.id" type="button" @click="stopForm.icon = ic.id"
+                      class="icon-radio-btn p-1.5 rounded-lg border theme-card-border flex flex-col items-center justify-center gap-0.5 text-slate-600 dark:text-slate-300 transition hover:bg-slate-100 dark:hover:bg-slate-800"
+                      :class="{ 'selected': stopForm.icon === ic.id }">
+                <i class="fa-solid" :class="ic.id + ' text-xs'"></i>
+                <span class="text-[8px] font-medium leading-none">{{ ic.label }}</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block font-bold mb-1">分類屬性</label>
+              <select v-model="stopForm.category" class="w-full px-2 py-1.5 border theme-card-border rounded-lg bg-transparent font-semibold text-xs">
+                <option value="sight">🏛️ 觀光・古蹟</option>
+                <option value="food">🍱 美食・燒肉</option>
+                <option value="transit">🚆 交通・鐵路</option>
+                <option value="lodging">🏨 住宿・放行李</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold mb-1">停留時間 (分鐘)</label>
+              <input type="number" v-model.number="stopForm.stayMins" min="0" step="5" class="w-full px-2 py-1.5 border theme-card-border rounded-lg bg-transparent font-semibold text-xs">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block font-bold mb-1">出發時間 (HH:MM)</label>
+              <input type="time" v-model="stopForm.depTime" required class="w-full px-2 py-1.5 border theme-card-border rounded-lg bg-transparent font-semibold text-xs">
+            </div>
+            <div>
+              <label class="block font-bold mb-1">抵達時間 (HH:MM)</label>
+              <input type="time" v-model="stopForm.arrTime" required class="w-full px-2 py-1.5 border theme-card-border rounded-lg bg-transparent font-semibold text-xs">
+            </div>
+          </div>
+
+          <div class="p-2.5 bg-slate-50 dark:bg-slate-900/60 rounded-lg border theme-card-border space-y-1.5">
+            <label class="block font-bold text-[10.5px]">交通方式與車程描述 (選填)</label>
+            <div class="grid grid-cols-2 gap-1.5">
+              <input type="text" v-model="stopForm.travelMode" placeholder="如：大阪地鐵 / JR 新快速" class="px-2 py-1 border theme-card-border rounded text-xs bg-white dark:bg-slate-800">
+              <input type="number" v-model.number="stopForm.travelMins" placeholder="車程分鐘 (如 25)" min="0" class="px-2 py-1 border theme-card-border rounded text-xs bg-white dark:bg-slate-800">
+            </div>
+            <input type="text" v-model="stopForm.travelDetail" placeholder="路線細節：由大國町搭地鐵至心齋橋" class="w-full px-2 py-1 border theme-card-border rounded text-xs bg-white dark:bg-slate-800">
+          </div>
+
+          <div>
+            <label class="block font-bold mb-1">重點備忘 / 行前提醒</label>
+            <textarea v-model="stopForm.note" rows="2" placeholder="備忘預約、門票、穿著建議..." class="w-full px-2.5 py-1.5 border theme-card-border rounded-lg bg-transparent text-xs leading-relaxed"></textarea>
+          </div>
+
+          <div class="pt-2 border-t theme-card-border flex items-center justify-between">
+            <button v-if="stopForm.id" type="button" @click="deleteCurrentStop" class="text-xs font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1 py-1">
+              <i class="fa-solid fa-trash-can"></i>
+              <span>刪除景點</span>
+            </button>
+            <div v-else></div>
+            <div class="flex items-center gap-1.5 ml-auto">
+              <button type="button" @click="showStopModal = false" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 font-semibold text-xs">取消</button>
+              <button type="submit" class="px-3.5 py-1.5 rounded-lg text-white theme-primary-bg theme-primary-hover font-bold text-xs shadow-xs">儲存景點</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Shop Modal -->
+    <div v-show="showShopModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-3">
+      <div class="theme-card-bg w-full sm:max-w-md rounded-t-2xl sm:rounded-xl max-h-[92vh] flex flex-col border theme-card-border shadow-2xl overflow-hidden pb-safe transition-colors">
+        <div class="px-4 py-3 border-b theme-card-border flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <div class="w-7 h-7 rounded-lg bg-orange-500/10 text-orange-600 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-store"></i>
+            </div>
+            <h3 class="text-xs sm:text-sm font-bold">新增周邊街邊私房店</h3>
+          </div>
+          <button @click="showShopModal = false" class="p-1 text-slate-400 hover:text-slate-600 rounded-md">
+            <i class="fa-solid fa-xmark text-base"></i>
+          </button>
+        </div>
+
+        <form @submit.prevent="saveShopForm" class="p-3.5 space-y-3 overflow-y-auto flex-1 text-xs">
+          <div>
+            <label class="block font-bold mb-1">關聯行程景點 *</label>
+            <select v-model="shopForm.targetStopId" required class="w-full px-2.5 py-1.5 border theme-card-border rounded-lg bg-transparent font-semibold">
+              <option v-for="s in currentDay?.stops" :key="s.id" :value="s.id">
+                {{ s.name.split(' ➔')[0] }}
+              </option>
             </select>
           </div>
+
           <div>
-            <label class="block font-bold mb-1">停留時間 (分鐘)</label>
-            <input type="number" id="formStopStayMins" min="0" step="5" value="60" class="w-full px-2 py-1.5 border theme-card-border rounded-lg bg-transparent font-semibold text-xs">
+            <label class="block font-bold mb-1">店名 / 特色小吃 *</label>
+            <input type="text" v-model="shopForm.name" required placeholder="如：星巴克 神戶北野異人館店" class="w-full px-2.5 py-1.5 border theme-card-border rounded-lg bg-transparent font-semibold">
           </div>
-        </div>
 
-        <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block font-bold mb-1">出發時間 (HH:MM)</label>
-            <input type="time" id="formStopDepTime" required class="w-full px-2 py-1.5 border theme-card-border rounded-lg bg-transparent font-semibold text-xs">
+            <label class="block font-bold mb-1">店家詳細地址 (用於導航)</label>
+            <input type="text" v-model="shopForm.address" placeholder="如：兵庫県神戸市中央区北野町3-1-31" class="w-full px-2.5 py-1.5 border theme-card-border rounded-lg bg-transparent text-xs">
           </div>
-          <div>
-            <label class="block font-bold mb-1">抵達時間 (HH:MM)</label>
-            <input type="time" id="formStopArrTime" required class="w-full px-2 py-1.5 border theme-card-border rounded-lg bg-transparent font-semibold text-xs">
-          </div>
-        </div>
 
-        <div class="p-2.5 bg-slate-50 dark:bg-slate-900/60 rounded-lg border theme-card-border space-y-1.5">
-          <label class="block font-bold text-[10.5px]">交通方式與車程描述 (選填)</label>
-          <div class="grid grid-cols-2 gap-1.5">
-            <input type="text" id="formStopTravelMode" placeholder="如：大阪地鐵 / JR 新快速" class="px-2 py-1 border theme-card-border rounded text-xs bg-white dark:bg-slate-800">
-            <input type="number" id="formStopTravelMins" placeholder="車程分鐘 (如 25)" min="0" class="px-2 py-1 border theme-card-border rounded text-xs bg-white dark:bg-slate-800">
-          </div>
-          <input type="text" id="formStopTravelDetail" placeholder="路線細節：由大國町搭地鐵至心齋橋" class="w-full px-2 py-1 border theme-card-border rounded text-xs bg-white dark:bg-slate-800">
-        </div>
-
-        <div>
-          <label class="block font-bold mb-1">重點備忘 / 行前提醒</label>
-          <textarea id="formStopNote" rows="2" placeholder="備忘預約、門票、穿著建議..." class="w-full px-2.5 py-1.5 border theme-card-border rounded-lg bg-transparent text-xs leading-relaxed"></textarea>
-        </div>
-
-        <div class="pt-2 border-t theme-card-border flex items-center justify-between">
-          <button type="button" id="deleteStopBtn" class="text-xs font-bold text-rose-600 hover:text-rose-700 hidden flex items-center gap-1 py-1">
-            <i class="fa-solid fa-trash-can"></i>
-            <span>刪除景點</span>
-          </button>
-          <div class="flex items-center gap-1.5 ml-auto">
-            <button type="button" id="cancelStopModalBtn" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 font-semibold text-xs">取消</button>
-            <button type="submit" class="px-3.5 py-1.5 rounded-lg text-white theme-primary-bg theme-primary-hover font-bold text-xs shadow-xs">儲存景點</button>
-          </div>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div id="splitModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-end sm:items-center justify-center p-0 sm:p-3">
-    <div class="theme-card-bg w-full sm:max-w-lg rounded-t-2xl sm:rounded-xl max-h-[92vh] flex flex-col border theme-card-border shadow-2xl overflow-hidden pb-safe transition-colors">
-      <div class="px-4 py-3 border-b theme-card-border flex items-center justify-between flex-shrink-0">
-        <div class="flex items-center gap-2">
-          <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-xs">
-            <i class="fa-solid fa-receipt"></i>
-          </div>
-          <div>
-            <h3 class="text-xs sm:text-sm font-bold">旅行分帳與代墊結算</h3>
-            <p class="text-[9.5px] text-slate-400">最小化轉帳次數演算法・雙幣別換算</p>
-          </div>
-        </div>
-        <button id="closeSplitModalBtn" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
-          <i class="fa-solid fa-xmark text-base"></i>
-        </button>
-      </div>
-
-      <div class="p-3.5 space-y-3 overflow-y-auto flex-1 text-xs">
-        <div class="p-2.5 bg-slate-50 dark:bg-slate-900/60 rounded-lg border theme-card-border space-y-1.5">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-[11px] text-slate-700 dark:text-slate-300">同行旅伴成員</span>
-            <span class="text-[9px] text-slate-400">點擊 × 移除</span>
-          </div>
-          <div class="flex items-center gap-1.5 flex-wrap" id="membersChipsContainer">
-          </div>
-          <div class="flex gap-1 pt-1">
-            <input type="text" id="newMemberInput" placeholder="輸入旅伴名字 (如: 小明)" class="flex-1 px-2 py-1 text-xs border theme-card-border rounded bg-white dark:bg-slate-800">
-            <button id="addNewMemberBtn" type="button" class="px-2.5 py-1 text-xs font-bold bg-slate-800 dark:bg-slate-700 text-white rounded">新增</button>
-          </div>
-        </div>
-
-        <form id="addExpenseForm" class="p-2.5 bg-white dark:bg-slate-800/80 rounded-lg border theme-card-border space-y-2">
-          <h4 class="font-bold text-[11px] text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
-            <i class="fa-solid fa-plus-circle"></i> 新增一筆先代墊消費
-          </h4>
-          <div>
-            <input type="text" id="expenseItemName" required placeholder="品項名稱 (如: あぶりや燒肉晚餐、USJ門票)" class="w-full px-2 py-1 text-xs border theme-card-border rounded bg-transparent">
-          </div>
-          <div class="grid grid-cols-3 gap-1.5">
-            <div class="col-span-2">
-              <input type="number" step="1" id="expenseAmount" required placeholder="金額 (數字)" class="w-full px-2 py-1 text-xs border theme-card-border rounded bg-transparent font-mono">
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block font-bold mb-1">分類標籤</label>
+              <select v-model="shopForm.cat" class="w-full px-2 py-1.5 border theme-card-border rounded-lg bg-transparent font-semibold text-xs">
+                <option value="food">🍱 必吃・美食</option>
+                <option value="cafe">☕ 咖啡・甜點</option>
+                <option value="night">🍶 居酒・宵夜</option>
+                <option value="goods">🛍️ 伴手禮・選物</option>
+              </select>
             </div>
             <div>
-              <select id="expenseCurrency" class="w-full px-2 py-1 text-xs border theme-card-border rounded bg-transparent font-bold">
+              <label class="block font-bold mb-1">消費價位</label>
+              <select v-model="shopForm.price" class="w-full px-2 py-1.5 border theme-card-border rounded-lg bg-transparent font-semibold text-xs">
+                <option value="$">$ (平價小吃)</option>
+                <option value="$$">$$ (中等消費)</option>
+                <option value="$$$">$$$ (頂級精緻)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-bold mb-1">必點招牌與特色描述</label>
+            <textarea v-model="shopForm.desc" rows="2" placeholder="特色招牌、必點人氣品項、排隊提醒等..." class="w-full px-2.5 py-1.5 border theme-card-border rounded-lg bg-transparent text-xs"></textarea>
+          </div>
+
+          <div class="pt-2 border-t theme-card-border flex items-center justify-end gap-1.5">
+            <button type="button" @click="showShopModal = false" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 font-semibold text-xs">取消</button>
+            <button type="submit" class="px-3.5 py-1.5 rounded-lg text-white bg-orange-600 hover:bg-orange-700 font-bold text-xs shadow-xs">儲存名店</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Split Modal (Expense Accounting) -->
+    <div v-show="showSplitModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-3">
+      <div class="theme-card-bg w-full sm:max-w-lg rounded-t-2xl sm:rounded-xl max-h-[92vh] flex flex-col border theme-card-border shadow-2xl overflow-hidden pb-safe transition-colors">
+        <div class="px-4 py-3 border-b theme-card-border flex items-center justify-between flex-shrink-0">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-receipt"></i>
+            </div>
+            <div>
+              <h3 class="text-xs sm:text-sm font-bold">旅行分帳與代墊結算</h3>
+              <p class="text-[9.5px] text-slate-400">最小化轉帳次數演算法・雲端多裝置即時同步</p>
+            </div>
+          </div>
+          <button @click="showSplitModal = false" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
+            <i class="fa-solid fa-xmark text-base"></i>
+          </button>
+        </div>
+
+        <div class="p-3.5 space-y-3 overflow-y-auto flex-1 text-xs">
+          <div class="p-2.5 bg-slate-50 dark:bg-slate-900/60 rounded-lg border theme-card-border space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-[11px] text-slate-700 dark:text-slate-300">同行旅伴成員</span>
+              <span class="text-[9px] text-slate-400">點擊 × 移除</span>
+            </div>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span v-for="m in expenseData.members" :key="m" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
+                {{ m }}
+                <button type="button" @click="removeMember(m)" class="text-rose-500 hover:text-rose-700 font-black">&times;</button>
+              </span>
+            </div>
+            <div class="flex gap-1 pt-1">
+              <input type="text" v-model="newMemberInput" placeholder="輸入旅伴名字 (如: 小明)" class="flex-1 px-2 py-1 text-xs border theme-card-border rounded bg-white dark:bg-slate-800">
+              <button type="button" @click="addNewMember" class="px-2.5 py-1 text-xs font-bold bg-slate-800 dark:bg-slate-700 text-white rounded">新增</button>
+            </div>
+          </div>
+
+          <form @submit.prevent="addExpenseItem" class="p-2.5 bg-white dark:bg-slate-800/80 rounded-lg border theme-card-border space-y-2">
+            <h4 class="font-bold text-[11px] text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+              <i class="fa-solid fa-plus-circle"></i> 新增一筆先代墊消費
+            </h4>
+            <input type="text" v-model="expenseForm.title" required placeholder="品項名稱 (如: あぶりや燒肉晚餐、USJ門票)" class="w-full px-2 py-1 text-xs border theme-card-border rounded bg-transparent">
+            
+            <div class="grid grid-cols-3 gap-1.5">
+              <div class="col-span-2">
+                <input type="number" step="1" v-model.number="expenseForm.amount" required placeholder="金額 (數字)" class="w-full px-2 py-1 text-xs border theme-card-border rounded bg-transparent font-mono">
+              </div>
+              <select v-model="expenseForm.currency" class="w-full px-2 py-1 text-xs border theme-card-border rounded bg-transparent font-bold">
                 <option value="JPY">日圓 (JPY)</option>
                 <option value="TWD">台幣 (TWD)</option>
               </select>
             </div>
-          </div>
-          <div class="grid grid-cols-2 gap-1.5">
+
+            <div class="grid grid-cols-2 gap-1.5">
+              <div>
+                <label class="block text-[9.5px] text-slate-400 font-bold mb-0.5">誰先代墊？</label>
+                <select v-model="expenseForm.payer" class="w-full px-2 py-1 text-xs border theme-card-border rounded bg-transparent font-semibold">
+                  <option v-for="m in expenseData.members" :key="m" :value="m">{{ m }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[9.5px] text-slate-400 font-bold mb-0.5">匯率基準 (1 JPY = ? TWD)</label>
+                <input type="number" step="0.001" v-model.number="expenseData.rate" @change="saveAllData(false)" class="w-full px-2 py-1 text-xs border theme-card-border rounded bg-transparent font-mono">
+              </div>
+            </div>
+
             <div>
-              <label class="block text-[9.5px] text-slate-400 font-bold mb-0.5">誰先代墊？</label>
-              <select id="expensePayer" class="w-full px-2 py-1 text-xs border theme-card-border rounded bg-transparent font-semibold">
-              </select>
+              <label class="block text-[9.5px] text-slate-400 font-bold mb-0.5">分攤對象</label>
+              <div class="flex items-center gap-2 flex-wrap">
+                <label v-for="m in expenseData.members" :key="m" class="inline-flex items-center gap-1 text-[10px] text-slate-700 dark:text-slate-300 font-semibold cursor-pointer">
+                  <input type="checkbox" :value="m" v-model="expenseForm.participants" class="w-3.5 h-3.5 rounded text-emerald-600">
+                  <span>{{ m }}</span>
+                </label>
+              </div>
             </div>
-            <div>
-              <label class="block text-[9.5px] text-slate-400 font-bold mb-0.5">匯率基準 (1 JPY = ? TWD)</label>
-              <input type="number" step="0.001" id="customExchangeRate" value="0.210" class="w-full px-2 py-1 text-xs border theme-card-border rounded bg-transparent font-mono">
-            </div>
-          </div>
 
-          <div>
-            <label class="block text-[9.5px] text-slate-400 font-bold mb-0.5">分攤對象 (預設全員平分)</label>
-            <div class="flex items-center gap-2 flex-wrap" id="splitParticipantsCheckboxes">
-            </div>
-          </div>
-
-          <button type="submit" class="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded shadow-xs text-xs">
-            記錄此筆代墊
-          </button>
-        </form>
-
-        <div class="p-2.5 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-lg border border-emerald-200 dark:border-emerald-800/40 space-y-1.5">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-[11px] text-emerald-800 dark:text-emerald-300">
-              <i class="fa-solid fa-scale-balanced mr-1"></i>誰該給誰多少錢 (清算明細)
-            </span>
-            <button id="copySettlementSummaryBtn" type="button" class="text-[10px] font-bold text-emerald-700 bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-emerald-300 flex items-center gap-1 active:scale-95">
-              <i class="fa-regular fa-copy"></i>
-              <span>複製群組訊息</span>
+            <button type="submit" class="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded shadow-xs text-xs">
+              記錄此筆代墊
             </button>
-          </div>
-          <div id="settlementDebtsList" class="space-y-1 text-xs">
-          </div>
-        </div>
+          </form>
 
-        <div class="space-y-1">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-[10.5px] text-slate-500">已記錄開銷列表</span>
-            <span id="expensesTotalBadge" class="text-[10px] font-mono text-slate-400">總計 0 筆</span>
+          <div class="p-2.5 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-lg border border-emerald-200 dark:border-emerald-800/40 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-[11px] text-emerald-800 dark:text-emerald-300">
+                <i class="fa-solid fa-scale-balanced mr-1"></i>誰該給誰多少錢 (清算明細)
+              </span>
+              <button type="button" @click="copySettlementSummary" class="text-[10px] font-bold text-emerald-700 bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-emerald-300 flex items-center gap-1 active:scale-95">
+                <i class="fa-regular fa-copy"></i>
+                <span>複製群組訊息</span>
+              </button>
+            </div>
+            <div class="space-y-1 text-xs">
+              <p v-if="settlements.length === 0" class="text-slate-400 text-[10px]">所有帳務已結清或尚無代墊記錄。</p>
+              <div v-for="(s, sIdx) in settlements" :key="sIdx" class="p-1.5 bg-white dark:bg-slate-900 rounded border border-emerald-300 dark:border-emerald-800 flex items-center justify-between font-bold text-[10.5px]">
+                <span><strong class="text-rose-600">{{ s.from }}</strong> 應付給 <strong class="text-emerald-600">{{ s.to }}</strong></span>
+                <span class="text-slate-800 dark:text-slate-100 font-mono">NT$ {{ s.amountTWD.toLocaleString() }} <span class="text-[9px] text-slate-400 font-normal">(約 ¥{{ s.amountJPY.toLocaleString() }})</span></span>
+              </div>
+            </div>
           </div>
-          <div id="expensesHistoryList" class="space-y-1 max-h-36 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/80">
-          </div>
-        </div>
 
+          <div class="space-y-1">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-[10.5px] text-slate-500">已記錄開銷列表</span>
+              <span class="text-[10px] font-mono text-slate-400">總計 {{ expenseData.items.length }} 筆</span>
+            </div>
+            <div class="space-y-1 max-h-36 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/80">
+              <div v-for="(item, iIdx) in expenseData.items" :key="item.id" class="pt-1.5 pb-1.5 flex items-center justify-between gap-1 text-[10px]">
+                <div class="truncate flex-1 min-w-0">
+                  <span class="font-bold text-slate-800 dark:text-slate-200">{{ item.title }}</span>
+                  <span class="text-slate-400"> (由 {{ item.payer }} 代墊)</span>
+                </div>
+                <div class="flex items-center gap-1.5 flex-shrink-0">
+                  <span class="font-mono font-bold text-emerald-600">{{ item.currency }} {{ item.amount.toLocaleString() }}</span>
+                  <button @click="removeExpenseItem(iIdx)" class="text-rose-500 hover:text-rose-700 p-0.5"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
-  </div>
 
-  <div id="shopModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-end sm:items-center justify-center p-0 sm:p-3">
-    <div class="theme-card-bg w-full sm:max-w-md rounded-t-2xl sm:rounded-xl max-h-[92vh] flex flex-col border theme-card-border shadow-2xl overflow-hidden pb-safe transition-colors">
-      <div class="px-4 py-3 border-b theme-card-border flex items-center justify-between">
-        <div class="flex items-center gap-1.5">
-          <div class="w-7 h-7 rounded-lg bg-orange-500/10 text-orange-600 flex items-center justify-center text-xs">
-            <i id="shopModalHeaderIcon" class="fa-solid fa-store"></i>
+    <!-- Settings & Cloud Backup Modal -->
+    <div v-show="showDataModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-3">
+      <div class="theme-card-bg w-full sm:max-w-md rounded-t-2xl sm:rounded-xl p-4 border theme-card-border shadow-2xl space-y-3 text-xs pb-safe">
+        <div class="flex items-center justify-between pb-1.5 border-b theme-card-border">
+          <div class="flex items-center gap-1.5">
+            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-cloud"></i>
+            </div>
+            <h3 class="text-xs sm:text-sm font-bold">雲端同步與備份管理</h3>
           </div>
-          <h3 id="shopModalTitle" class="text-xs sm:text-sm font-bold">新增周邊街邊私房店</h3>
-        </div>
-        <button id="closeShopModalBtn" class="p-1 text-slate-400 hover:text-slate-600 rounded-md">
-          <i class="fa-solid fa-xmark text-base"></i>
-        </button>
-      </div>
-
-      <form id="shopForm" class="p-3.5 space-y-3 overflow-y-auto flex-1 text-xs">
-        <input type="hidden" id="formShopId">
-
-        <div>
-          <label class="block font-bold mb-1">關聯行程景點 *</label>
-          <select id="formShopStopTarget" required class="w-full px-2.5 py-1.5 border theme-card-border rounded-lg bg-transparent font-semibold">
-          </select>
+          <button @click="showDataModal = false" class="p-1 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-base"></i></button>
         </div>
 
-        <div>
-          <label class="block font-bold mb-1">店名 / 特色小吃 *</label>
-          <input type="text" id="formShopName" required placeholder="如：星巴克 神戶北野異人館店" class="w-full px-2.5 py-1.5 border theme-card-border rounded-lg bg-transparent font-semibold">
+        <div class="p-2.5 rounded-lg bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/40 text-[11px] text-sky-900 dark:text-sky-200 leading-relaxed">
+          <p class="font-bold mb-1"><i class="fa-solid fa-bolt mr-1"></i>Firebase 雲端實時同步已啟用</p>
+          <p class="text-[10px] opacity-90">所有裝置均連線至共用雲端空間。任何修改將毫秒級同步給每位旅伴，無須手動匯出/匯入。</p>
+          <p class="text-[9.5px] mt-1 font-mono text-slate-500 dark:text-slate-400">目前使用者身分 ID：<br><span class="select-all font-bold text-sky-700 dark:text-sky-300">{{ currentUserId || '連接中...' }}</span></p>
         </div>
 
-        <div>
-          <label class="block font-bold mb-1">店家詳細地址 (用於導航)</label>
-          <input type="text" id="formShopAddress" placeholder="如：兵庫県神戸市中央区北野町3-1-31" class="w-full px-2.5 py-1.5 border theme-card-border rounded-lg bg-transparent text-xs">
-        </div>
+        <div class="space-y-1.5">
+          <button @click="copyShareLink" class="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-share-nodes text-xs"></i>
+            <span>複製專屬分享連結 (傳給旅伴)</span>
+          </button>
 
-        <div>
-          <label class="block font-bold mb-1 flex items-center justify-between">
-            <span>名店類型 Icon</span>
-            <span class="text-[9px] text-slate-400 font-normal">點選切換</span>
+          <button @click="exportJsonBackup" class="w-full py-2 px-3 theme-primary-light-bg theme-primary-text rounded-lg font-bold flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-download text-xs"></i>
+            <span>匯出完整行程備份 (JSON)</span>
+          </button>
+
+          <label class="w-full py-2 px-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 rounded-lg font-bold flex items-center justify-center gap-1.5 transition cursor-pointer">
+            <i class="fa-solid fa-upload text-xs"></i>
+            <span>匯入備份檔案 (JSON)</span>
+            <input type="file" @change="importJsonBackup" accept=".json" class="hidden">
           </label>
-          <div class="grid grid-cols-7 gap-1 p-1 bg-slate-50 dark:bg-slate-900/60 rounded-lg border theme-card-border max-h-20 overflow-y-auto no-scrollbar" id="shopIconGrid">
-          </div>
-          <input type="hidden" id="formShopIcon" value="fa-utensils">
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block font-bold mb-1">分類標籤</label>
-            <select id="formShopCat" class="w-full px-2 py-1.5 border theme-card-border rounded-lg bg-transparent font-semibold text-xs">
-              <option value="food">🍱 必吃・美食</option>
-              <option value="cafe">☕ 咖啡・甜點</option>
-              <option value="night">🍶 居酒・宵夜</option>
-              <option value="goods">🛍️ 伴手禮・選物</option>
-            </select>
-          </div>
-          <div>
-            <label class="block font-bold mb-1">消費價位</label>
-            <select id="formShopPrice" class="w-full px-2 py-1.5 border theme-card-border rounded-lg bg-transparent font-semibold text-xs">
-              <option value="$">$ (平價小吃)</option>
-              <option value="$$">$$ (中等消費)</option>
-              <option value="$$$">$$$ (頂級精緻)</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label class="block font-bold mb-1">必點招牌與特色描述</label>
-          <textarea id="formShopDesc" rows="2" placeholder="特色招牌、必點人氣品項、排隊提醒等..." class="w-full px-2.5 py-1.5 border theme-card-border rounded-lg bg-transparent text-xs"></textarea>
         </div>
 
         <div class="pt-2 border-t theme-card-border flex items-center justify-between">
-          <button type="button" id="deleteShopBtn" class="text-xs font-bold text-rose-600 hover:text-rose-700 hidden flex items-center gap-1 py-1">
-            <i class="fa-solid fa-trash-can"></i>
-            <span>刪除店家</span>
+          <button @click="resetDefaultData" class="text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 py-1 text-[11px]">
+            <i class="fa-solid fa-rotate-left"></i>
+            <span>重設為原始預設</span>
           </button>
-          <div class="flex items-center gap-1.5 ml-auto">
-            <button type="button" id="cancelShopModalBtn" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 font-semibold text-xs">取消</button>
-            <button type="submit" class="px-3.5 py-1.5 rounded-lg text-white bg-orange-600 hover:bg-orange-700 font-bold text-xs shadow-xs">儲存名店</button>
-          </div>
+          <button @click="showDataModal = false" class="px-3.5 py-1.5 rounded-lg text-white bg-slate-900 dark:bg-slate-700 font-bold">完成</button>
         </div>
-      </form>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toastNotification" class="fixed top-3 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-2xl transition-all duration-300 opacity-0 pointer-events-none flex items-center gap-1.5">
+      <i class="fa-solid fa-circle-check text-emerald-400 text-xs"></i>
+      <span id="toastMsg">{{ toastText }}</span>
     </div>
   </div>
 
-  <div id="dataModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-end sm:items-center justify-center p-0 sm:p-3">
-    <div class="theme-card-bg w-full sm:max-w-md rounded-t-2xl sm:rounded-xl p-4 border theme-card-border shadow-2xl space-y-3 text-xs pb-safe">
-      <div class="flex items-center justify-between pb-1.5 border-b theme-card-border">
-        <div class="flex items-center gap-1.5">
-          <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs">
-            <i class="fa-solid fa-database"></i>
-          </div>
-          <h3 id="modalLabel" class="text-xs sm:text-sm font-bold">行程與分帳備份管理</h3>
-        </div>
-        <button id="closeDataModalBtn" class="p-1 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-base"></i></button>
-      </div>
-
-      <p class="text-slate-600 dark:text-slate-400 leading-relaxed text-[11px]">
-        所有修改皆會即時寫入本機與網址列。點擊下方按鈕可快速複製攜帶最新內容的專屬連結。
-      </p>
-
-      <div class="space-y-1.5">
-        <button id="copyShareLinkInModalBtn" class="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold flex items-center justify-center gap-1.5 transition">
-          <i class="fa-solid fa-link text-xs"></i>
-          <span>複製最新同步網址 (傳給旅伴)</span>
-        </button>
-
-        <button id="exportJsonBtn" class="w-full py-2 px-3 theme-primary-light-bg theme-primary-text rounded-lg font-bold flex items-center justify-center gap-1.5 transition">
-          <i class="fa-solid fa-download text-xs"></i>
-          <span>匯出完整行程備份 (JSON)</span>
-        </button>
-
-        <label class="w-full py-2 px-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 rounded-lg font-bold flex items-center justify-center gap-1.5 transition cursor-pointer">
-          <i class="fa-solid fa-upload text-xs"></i>
-          <span>匯入備份檔案 (JSON)</span>
-          <input type="file" id="importJsonInput" accept=".json" class="hidden">
-        </label>
-      </div>
-
-      <div class="pt-2 border-t theme-card-border flex items-center justify-between">
-        <button id="resetDefaultBtn" class="text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 py-1 text-[11px]">
-          <i class="fa-solid fa-rotate-left"></i>
-          <span>重設為原始預設</span>
-        </button>
-        <button id="finishDataModalBtn" class="px-3.5 py-1.5 rounded-lg text-white bg-slate-900 dark:bg-slate-700 font-bold">完成</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast Notification -->
-  <div id="toastNotification" class="fixed top-3 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-2xl transition-all duration-300 opacity-0 pointer-events-none flex items-center gap-1.5">
-    <i class="fa-solid fa-circle-check text-emerald-400 text-xs"></i>
-    <span id="toastMsg">成功更新</span>
-  </div>
-
-    <!-- 獨立外部核心邏輯 JS 檔 -->
-  <script src="js/app.js"></script>
+  <!-- Vue 3 核心應用模組 -->
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>
